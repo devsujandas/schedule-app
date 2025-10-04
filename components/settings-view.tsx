@@ -1,19 +1,16 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useScheduleStore } from "@/lib/store"
 import { Download, Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
-import { InstallButton, useInstallState } from "@/components/install-button"
 
 export function SettingsView() {
   const { scheduleItems, importSchedule, clearAllData, resetToDefault } = useScheduleStore()
   const { theme, setTheme } = useTheme()
-  const { isInstallable, showApkDownload } = useInstallState()
   const [importError, setImportError] = useState("")
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -97,26 +94,21 @@ export function SettingsView() {
         <p className="text-sm text-muted-foreground mt-1">Manage your schedule data and preferences</p>
       </div>
 
-      {/* Install App */}
-      {(isInstallable || showApkDownload) && (
-        <Card className="p-6 lg:hidden">
-          <h3 className="font-semibold mb-4">Install App</h3>
-          <div className="space-y-4">
-            <div>
-              <InstallButton />
-              <p className="text-xs text-muted-foreground mt-2">
-                Install this app on your device for quick access and offline use
-              </p>
-              {/* --- APK Download Button --- */}
-              <Button onClick={handleApkDownload} className="gap-2 w-full sm:w-auto mt-2">
-                <Download className="w-4 h-4" />
-                Download APK
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
+      {/* APK Download */}
+      <Card className="p-6">
+        <h3 className="font-semibold mb-4">Download App</h3>
+        <div className="space-y-4">
+          <Button onClick={handleApkDownload} className="gap-2 w-full sm:w-auto">
+            <Download className="w-4 h-4" />
+            Download APK
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            Download and install the APK version of this app
+          </p>
+        </div>
+      </Card>
 
+      {/* Appearance */}
       <Card className="p-6">
         <h3 className="font-semibold mb-4">Appearance</h3>
         <div className="space-y-4">
