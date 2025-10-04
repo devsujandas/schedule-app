@@ -23,17 +23,20 @@ export default function Home() {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center  sm:gap-1">
-  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center justify-between h-14  sm:h-16">
+            <div className="flex items-center gap-1 sm:gap-1">
+<div className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center flex-shrink-0">
   <img
   src="/Schedulaar.png"
   alt="Logo"
-  className="w-10 h-10 sm:w-10 sm:h-10 object-contain"
+className="w-full h-full object-contain"
 />
 
   </div>
-  <h1 className="text-lg sm:text-xl font-semibold tracking-tight">Schedulaar</h1>
+  <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-playfair text-foreground">
+  Schedulaar
+</h1>
+
 </div>
 
 
