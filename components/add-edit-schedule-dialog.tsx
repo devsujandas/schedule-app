@@ -11,6 +11,9 @@ import { useScheduleStore, type ScheduleItem, type ActivityCategory } from "@/li
 import { Bed, BookOpen, Coffee, Brain } from "lucide-react"
 import { TimePicker } from "@/components/time-picker"
 
+// ✅ define a union type for icon
+type IconType = "book-open" | "bed" | "coffee" | "brain-circuit"
+
 interface AddEditScheduleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -24,7 +27,7 @@ export function AddEditScheduleDialog({ open, onOpenChange, item }: AddEditSched
     description: "",
     startHour: 9,
     endHour: 10,
-    icon: "book-open" as const,
+    icon: "book-open" as IconType, // ✅ use union type here
     category: "work" as ActivityCategory,
   })
 
@@ -35,7 +38,7 @@ export function AddEditScheduleDialog({ open, onOpenChange, item }: AddEditSched
         description: item.description,
         startHour: item.startHour,
         endHour: item.endHour,
-        icon: item.icon,
+        icon: item.icon as IconType, // ✅ cast item.icon properly
         category: item.category || "work",
       })
     } else {
@@ -117,12 +120,12 @@ export function AddEditScheduleDialog({ open, onOpenChange, item }: AddEditSched
               onChange={(e) => setFormData({ ...formData, category: e.target.value as ActivityCategory })}
               className="w-full px-3 py-2 rounded-md border border-input bg-background mt-1.5 font-medium"
             >
-              <option value="work">💼 Work</option>
-              <option value="study">📚 Study</option>
-              <option value="rest">😴 Rest</option>
-              <option value="exercise">💪 Exercise</option>
-              <option value="personal">🎯 Personal</option>
-              <option value="social">👥 Social</option>
+              <option value="work"> Work</option>
+              <option value="study"> Study</option>
+              <option value="rest"> Rest</option>
+              <option value="exercise"> Exercise</option>
+              <option value="personal"> Personal</option>
+              <option value="social"> Social</option>
             </select>
           </div>
 
