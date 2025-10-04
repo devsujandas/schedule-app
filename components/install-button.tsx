@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Download, Smartphone } from "lucide-react"
+import { Download } from "lucide-react"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -11,7 +11,6 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function useInstallState() {
   const [isInstallable, setIsInstallable] = useState(false)
-  const [showApkDownload, setShowApkDownload] = useState(false)
 
   useEffect(() => {
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches
@@ -35,22 +34,18 @@ export function useInstallState() {
     window.addEventListener("beforeinstallprompt", handler)
     window.addEventListener("appinstalled", installedHandler)
 
-    const userAgent = navigator.userAgent.toLowerCase()
-    const isAndroid = userAgent.includes("android")
-    setShowApkDownload(isAndroid)
-
     return () => {
       window.removeEventListener("beforeinstallprompt", handler)
       window.removeEventListener("appinstalled", installedHandler)
     }
   }, [])
 
-  return { isInstallable, showApkDownload }
+  return { isInstallable }
 }
 
 export function InstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const { isInstallable, showApkDownload } = useInstallState()
+  const { isInstallable } = useInstallState()
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -84,42 +79,17 @@ export function InstallButton() {
     setDeferredPrompt(null)
   }
 
-  const handleApkDownload = () => {
-    // ✅ Replace with your Cloud Storage direct download link
-    const apkUrl = "https://drive.google.com/file/d/1dXKjakS3iDCaguuw1o1Qv6JctsGRwGaH/view?usp=drivesdk"
-    const link = document.createElement("a")
-    link.href = apkUrl
-    link.download = "schedule.apk"
-    link.target = "_blank"
-    link.rel = "noopener noreferrer"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  if (!isInstallable && !showApkDownload) return null
+  if (!isInstallable) return null
 
   return (
     <div className="space-y-3">
-      {isInstallable && (
-        <Button
-          onClick={handleInstallClick}
-          className="px-5 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition gap-2 w-full sm:w-auto"
-        >
-          <Download className="w-4 h-4" />
-          Install App
-        </Button>
-      )}
-      {showApkDownload && (
-        <Button
-          onClick={handleApkDownload}
-          variant="outline"
-          className="px-5 py-3 rounded-lg shadow-sm gap-2 w-full sm:w-auto bg-transparent"
-        >
-          <Smartphone className="w-4 h-4" />
-          Download APK
-        </Button>
-      )}
+      <Button
+        onClick={handleInstallClick}
+        className="px-5 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition gap-2 w-full sm:w-auto"
+      >
+        <Download className="w-4 h-4" />
+        Install App
+      </Button>
     </div>
   )
 }
