@@ -40,23 +40,25 @@ className="w-full h-full object-contain"
 </div>
 
 
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="text-right">
-                <div className="text-xs sm:text-sm font-medium">
-                  {currentTime.toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </div>
-                <div className="text-[10px] sm:text-xs text-muted-foreground">
-                  {currentTime.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-              </div>
-            </div>
+           <div className="flex items-center gap-2 sm:gap-4">
+  <div className="text-right">
+    <div className="text-xs sm:text-sm font-medium">
+      {currentTime.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      })}
+    </div>
+    <div className="text-[10px] sm:text-xs text-muted-foreground">
+      {currentTime.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit", 
+      })}
+    </div>
+  </div>
+</div>
+
           </div>
         </div>
       </header>
