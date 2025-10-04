@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useScheduleStore } from "@/lib/store"
-import { Download, Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor, Smartphone, ArrowDownIcon, BookDownIcon, ArrowDownFromLineIcon, PackageCheckIcon, LucideFolderDown, LucideSmartphone, LucideTrendingUpDown, LucideArrowDown10, LucideMoveDown  } from "lucide-react"
+import { Download, Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor, Smartphone,   Calendar, Lock, Zap  } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { InstallButton, useInstallState } from "@/components/install-button"
 
@@ -261,13 +261,29 @@ export function SettingsView() {
 
       {/* Info */}
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">About</h3>
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>Schedule App v2.3</p>
-          <p>All data is stored locally in your browser</p>
-          <p>Current schedule items: {scheduleItems.length}</p>
-        </div>
-      </Card>
+  <h3 className="font-semibold mb-4">About</h3>
+  <div className="space-y-2 text-sm text-muted-foreground text-center">
+    {/* Icon line centered */}
+    <div className="flex justify-center items-center gap-6 mb-2">
+      <div className="flex items-center gap-1">
+        <Calendar className="w-4 h-4" />
+        <span>Organized</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <Lock className="w-4 h-4" />
+        <span>Private</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <Zap className="w-4 h-4" />
+        <span>Always Ready</span>
+      </div>
+    </div>
+
+    <p>Your schedule — organized, private, and always ready.</p>
+    <p>Current schedule items: {scheduleItems.length}</p>
+    <p>Schedule App v2.3</p>
+  </div>
+</Card>
     </div>
   )
 }
