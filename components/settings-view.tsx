@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useScheduleStore } from "@/lib/store"
-import { Download, Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor } from "lucide-react"
+import { Download, Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor, Smartphone, ArrowDownIcon, BookDownIcon, ArrowDownFromLineIcon, PackageCheckIcon, LucideFolderDown, LucideSmartphone, LucideTrendingUpDown, LucideArrowDown10, LucideMoveDown  } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { InstallButton, useInstallState } from "@/components/install-button"
 
@@ -100,18 +100,19 @@ export function SettingsView() {
       {/* Install App */}
       {(isInstallable || showApkDownload) && (
         <Card className="p-6 lg:hidden">
-          
-          <div className="space-y-4">
+          <h3 className="font-semibold mb-4">Install App</h3>
+          <div className="">
             <div>
               <InstallButton />
+              {/* --- APK Download Button --- */}
+              <Button onClick={handleApkDownload} className="gap-2 w-full sm:w-auto">
+                <Smartphone  className="w-4 h-4" />
+                Download APK
+              </Button>
               <p className="text-xs text-muted-foreground mt-2">
                 Install this app on your device for quick access and offline use
               </p>
-              {/* --- APK Download Button --- */}
-              <Button onClick={handleApkDownload} className="gap-2 w-full sm:w-auto mt-2">
-                <Download className="w-4 h-4" />
-                Download APK
-              </Button>
+              
             </div>
           </div>
         </Card>

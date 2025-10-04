@@ -94,29 +94,8 @@ export function InstallButton() {
     document.body.removeChild(link)
   }
 
-  if (!isInstallable && !showApkDownload) return null
+  if (!showApkDownload && !isInstallable) return null
 
-  return (
-    <div className="space-y-3">
-      {isInstallable && (
-        <Button
-          onClick={handleInstallClick}
-          className="px-5 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition gap-2 w-full sm:w-auto"
-        >
-          <Download className="w-4 h-4" />
-          Install App
-        </Button>
-      )}
-      {showApkDownload && (
-        <Button
-          onClick={handleApkDownload}
-          variant="outline"
-          className="px-5 py-3 rounded-lg shadow-sm gap-2 w-full sm:w-auto bg-transparent"
-        >
-          <Smartphone className="w-4 h-4" />
-          Download APK
-        </Button>
-      )}
-    </div>
-  )
+  return 
+  
 }
