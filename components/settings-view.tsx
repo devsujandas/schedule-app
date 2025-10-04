@@ -263,6 +263,10 @@ export function SettingsView() {
       <Card className="p-6">
   <h3 className="font-semibold mb-4">About</h3>
   <div className="space-y-2 text-sm text-muted-foreground">
+    
+     <p>Your schedule — organized, private, and always ready.</p>
+    <p>Current schedule items: {scheduleItems.length}</p>
+    <p>Schedule App v2.3</p>
     {/* Icon line added */}
     <div className="flex items-center gap-6 mb-2">
       <div className="flex items-center gap-1">
@@ -279,9 +283,7 @@ export function SettingsView() {
       </div>
     </div>
 
-    <p>Your schedule — organized, private, and always ready.</p>
-    <p>Current schedule items: {scheduleItems.length}</p>
-    <p>Schedule App v2.3</p>
+   
   </div>
 </Card>
     </div>

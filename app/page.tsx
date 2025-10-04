@@ -24,12 +24,17 @@ export default function Home() {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-foreground rounded-lg flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-background" />
-              </div>
-              <h1 className="text-lg sm:text-xl font-semibold tracking-tight">Schedule</h1>
-            </div>
+            <div className="flex items-center  sm:gap-1">
+  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0">
+    <img
+      src="/schedulaar.png"  // ← ekhane tomar logo'r path dao
+      alt="Logo"
+      className="w-10 h-10 sm:w-30 sm:h-30 object-contain"
+    />
+  </div>
+  <h1 className="text-lg sm:text-xl font-semibold tracking-tight">schedulaar</h1>
+</div>
+
 
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="text-right">
