@@ -85,10 +85,10 @@ export function InstallButton() {
   }
 
   const handleApkDownload = () => {
-    const apkUrl = "/downloads/schedule-app.apk"
+    const apkUrl = "/downloads/schedule.apk"
     const link = document.createElement("a")
     link.href = apkUrl
-    link.download = "schedule-app.apk"
+    link.download = "schedule.apk"
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
