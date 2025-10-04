@@ -1,18 +1,19 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useScheduleStore } from "@/lib/store"
-import { Download, Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor } from "lucide-react"
+import { Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { InstallButton, useInstallState } from "@/components/install-button"
 
 export function SettingsView() {
   const { scheduleItems, importSchedule, clearAllData, resetToDefault } = useScheduleStore()
   const { theme, setTheme } = useTheme()
-  const { isInstallable } = useInstallState() // ✅ Removed showApkDownload
+  const { isInstallable, showApkDownload } = useInstallState()
   const [importError, setImportError] = useState("")
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -86,7 +87,7 @@ export function SettingsView() {
       </div>
 
       {/* Install App */}
-      {isInstallable && (
+      {(isInstallable || showApkDownload) && (
         <Card className="p-6 lg:hidden">
           <h3 className="font-semibold mb-4">Install App</h3>
           <div className="space-y-4">
@@ -95,12 +96,12 @@ export function SettingsView() {
               <p className="text-xs text-muted-foreground mt-2">
                 Install this app on your device for quick access and offline use
               </p>
+              {/* Removed Download APK button as requested */}
             </div>
           </div>
         </Card>
       )}
 
-      {/* Appearance */}
       <Card className="p-6">
         <h3 className="font-semibold mb-4">Appearance</h3>
         <div className="space-y-4">
@@ -152,7 +153,7 @@ export function SettingsView() {
                 </>
               ) : (
                 <>
-                  <Download className="w-4 h-4" />
+                  <Upload className="w-4 h-4" />
                   Export Schedule
                 </>
               )}
@@ -186,7 +187,6 @@ export function SettingsView() {
               className="hidden"
               disabled={isImporting}
             />
-            <p className="text-xs text-muted-foreground mt-2">Upload a previously exported schedule file</p>
             {importError && <p className="text-xs text-red-500 mt-1">{importError}</p>}
           </div>
         </div>
@@ -246,7 +246,7 @@ export function SettingsView() {
       <Card className="p-6">
         <h3 className="font-semibold mb-4">About</h3>
         <div className="space-y-2 text-sm text-muted-foreground">
-          <p>Schedule App v2.4</p>
+          <p>Schedule App v2.3</p>
           <p>All data is stored locally in your browser</p>
           <p>Current schedule items: {scheduleItems.length}</p>
         </div>
