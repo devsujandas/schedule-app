@@ -35,82 +35,72 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
     onChange(finalHour + newMinute / 60)
   }
 
-  const handleHourChange = (delta: number) => {
-    let newHour = hour + delta
-    if (newHour > 12) newHour = newHour - 12
-    if (newHour < 1) newHour = 12 + newHour
+  const handleHourChange = (newHour: number) => {
     setHour(newHour)
     updateTime(newHour, minute, period)
   }
 
-  const handleMinuteChange = (delta: number) => {
-    let newMinute = minute + delta
-    if (newMinute >= 60) {
-      handleHourChange(1)
-      newMinute = newMinute % 60
-    } else if (newMinute < 0) {
-      handleHourChange(-1)
-      newMinute = 60 + newMinute
-    }
+  const handleMinuteChange = (newMinute: number) => {
     setMinute(newMinute)
     updateTime(hour, newMinute, period)
   }
 
-  const handlePeriodChange = () => {
-    const newPeriod = period === "AM" ? "PM" : "AM"
+  const handlePeriodChange = (newPeriod: "AM" | "PM") => {
     setPeriod(newPeriod)
     updateTime(hour, minute, newPeriod)
   }
 
-  // Smooth scroll logic
-  const useSmoothScroll = () => {
-    const touchStartY = useRef(0)
-    const touchStartTime = useRef(0)
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1)
+  const minutes = Array.from({ length: 60 }, (_, i) => i)
 
-    const getDeltaValue = (delta: number, duration: number) => {
-      // Fast swipe = bigger delta, slow swipe = 1 increment
-      const speed = Math.abs(delta) / duration
-      if (speed > 0.5) return Math.min(Math.round(speed * 20), 20) // max 20
-      return 1
+  // ---------- Smooth Scroll Logic ----------
+  const useSmoothScroll = (
+    onScrollUp: () => void,
+    onScrollDown: () => void
+  ) => {
+    const touchStartY = useRef(0)
+
+    const handleDelta = (delta: number) => {
+      const absDelta = Math.abs(delta)
+      const steps = absDelta < 20 ? 1 : absDelta < 50 ? 2 : absDelta < 100 ? 3 : 4
+      if (delta > 0) {
+        for (let i = 0; i < steps; i++) onScrollDown()
+      } else {
+        for (let i = 0; i < steps; i++) onScrollUp()
+      }
     }
 
     return {
-      onWheel: (e: React.WheelEvent, type: "hour" | "minute") => {
-        const delta = e.deltaY
-        if (type === "hour") handleHourChange(delta > 0 ? -1 : 1)
-        else handleMinuteChange(delta > 0 ? -1 : 1)
+      onWheel: (e: React.WheelEvent) => {
+        handleDelta(e.deltaY)
       },
       onTouchStart: (e: React.TouchEvent) => {
         touchStartY.current = e.touches[0].clientY
-        touchStartTime.current = Date.now()
       },
-      onTouchEnd: (e: React.TouchEvent, type: "hour" | "minute") => {
-        const deltaY = touchStartY.current - e.changedTouches[0].clientY
-        const duration = (Date.now() - touchStartTime.current) / 1000 // seconds
-        const deltaValue = getDeltaValue(deltaY, duration)
-        if (type === "hour") handleHourChange(deltaY > 0 ? deltaValue : -deltaValue)
-        else handleMinuteChange(deltaY > 0 ? deltaValue : -deltaValue)
+      onTouchMove: (e: React.TouchEvent) => {
+        const delta = touchStartY.current - e.touches[0].clientY
+        handleDelta(delta)
+        touchStartY.current = e.touches[0].clientY
       },
     }
   }
 
-  const scrollHandlers = useSmoothScroll()
-
   return (
     <div className="space-y-3 text-center select-none">
-      {/* Label with better heading */}
-      <h3 className="flex items-center justify-center gap-2 text-lg font-semibold text-foreground">
-        <Clock className="w-5 h-5" />
-        {label}
-      </h3>
+      {/* Label */}
+      <label className="text-sm font-semibold flex items-center justify-center gap-2 text-foreground">
+        <Clock className="w-4 h-4" />
+        <span className="text-lg">{label}</span>
+      </label>
 
       <div className="flex items-center justify-center gap-6 sm:gap-8">
         {/* Hour */}
         <div
           className="flex flex-col items-center w-16 cursor-pointer"
-          onWheel={(e) => scrollHandlers.onWheel(e, "hour")}
-          onTouchStart={scrollHandlers.onTouchStart}
-          onTouchEnd={(e) => scrollHandlers.onTouchEnd(e, "hour")}
+          {...useSmoothScroll(
+            () => handleHourChange(hour === 12 ? 1 : hour + 1),
+            () => handleHourChange(hour === 1 ? 12 : hour - 1)
+          )}
         >
           <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {hour === 1 ? 12 : String(hour - 1).padStart(2, "0")}
@@ -134,9 +124,10 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
         {/* Minute */}
         <div
           className="flex flex-col items-center w-16 cursor-pointer"
-          onWheel={(e) => scrollHandlers.onWheel(e, "minute")}
-          onTouchStart={scrollHandlers.onTouchStart}
-          onTouchEnd={(e) => scrollHandlers.onTouchEnd(e, "minute")}
+          {...useSmoothScroll(
+            () => handleMinuteChange((minute + 1) % 60),
+            () => handleMinuteChange((minute - 1 + 60) % 60)
+          )}
         >
           <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {String((minute - 1 + 60) % 60).padStart(2, "0")}
@@ -158,7 +149,10 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
         {/* Period */}
         <div
           className="flex flex-col items-center w-16 cursor-pointer"
-          onClick={handlePeriodChange}
+          {...useSmoothScroll(
+            () => handlePeriodChange(period === "AM" ? "PM" : "AM"),
+            () => handlePeriodChange(period === "AM" ? "PM" : "AM")
+          )}
         >
           <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {period === "AM" ? "PM" : "AM"}
@@ -176,6 +170,31 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
             {period === "AM" ? "PM" : "AM"}
           </span>
         </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex justify-center gap-6 mt-4">
+        <button
+          type="button"
+          onClick={() => handleHourChange(hour === 12 ? 1 : hour + 1)}
+          className="px-3 py-1 rounded-md border text-foreground hover:bg-muted"
+        >
+          Hour +
+        </button>
+        <button
+          type="button"
+          onClick={() => handleMinuteChange((minute + 1) % 60)}
+          className="px-3 py-1 rounded-md border text-foreground hover:bg-muted"
+        >
+          Min +
+        </button>
+        <button
+          type="button"
+          onClick={() => handlePeriodChange(period === "AM" ? "PM" : "AM")}
+          className="px-3 py-1 rounded-md border text-foreground hover:bg-muted"
+        >
+          Switch
+        </button>
       </div>
     </div>
   )
