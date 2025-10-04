@@ -26,11 +26,12 @@ export default function Home() {
           <div className="flex items-center justify-between h-14 sm:h-16">
             <div className="flex items-center  sm:gap-1">
   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0">
-    <img
-      src="/schedulaar.png"  // ← ekhane tomar logo'r path dao
-      alt="Logo"
-      className="w-10 h-10 sm:w-30 sm:h-30 object-contain"
-    />
+  <img
+  src="/schedulaar.png"
+  alt="Logo"
+  className="w-10 h-10 sm:w-10 sm:h-10 object-contain"
+/>
+
   </div>
   <h1 className="text-lg sm:text-xl font-semibold tracking-tight">schedulaar</h1>
 </div>
