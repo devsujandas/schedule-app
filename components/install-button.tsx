@@ -85,10 +85,13 @@ export function InstallButton() {
   }
 
   const handleApkDownload = () => {
-    const apkUrl = "/downloads/schedule.apk"
+    // ✅ Replace with your Cloud Storage direct download link
+    const apkUrl = "https://drive.google.com/file/d/1dXKjakS3iDCaguuw1o1Qv6JctsGRwGaH/view?usp=drivesdk"
     const link = document.createElement("a")
     link.href = apkUrl
     link.download = "schedule.apk"
+    link.target = "_blank"
+    link.rel = "noopener noreferrer"
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
