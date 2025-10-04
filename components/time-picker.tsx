@@ -34,12 +34,8 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
 
   const updateTime = (newHour: number, newMinute: number, newPeriod: "AM" | "PM") => {
     let finalHour = newHour
-
-    if (newPeriod === "PM" && newHour !== 12) {
-      finalHour = newHour + 12
-    } else if (newPeriod === "AM" && newHour === 12) {
-      finalHour = 0
-    }
+    if (newPeriod === "PM" && newHour !== 12) finalHour = newHour + 12
+    else if (newPeriod === "AM" && newHour === 12) finalHour = 0
 
     onChange(finalHour + newMinute / 60)
   }
@@ -72,17 +68,43 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
   const hours = Array.from({ length: 12 }, (_, i) => i + 1)
   const minutes = Array.from({ length: 60 }, (_, i) => i)
 
+  // --- Touch handlers (scroll/swipe up/down) ---
+  const useSwipe = (onSwipeUp: () => void, onSwipeDown: () => void) => {
+    let touchStartY = 0
+    return {
+      onTouchStart: (e: React.TouchEvent) => {
+        touchStartY = e.touches[0].clientY
+      },
+      onTouchEnd: (e: React.TouchEvent) => {
+        const touchEndY = e.changedTouches[0].clientY
+        if (touchStartY - touchEndY > 30) {
+          onSwipeUp()
+        } else if (touchEndY - touchStartY > 30) {
+          onSwipeDown()
+        }
+      },
+    }
+  }
+
   return (
-    <div className="space-y-3 text-center">
+    <div className="space-y-3 text-center select-none">
+      {/* Label */}
       <label className="text-sm font-semibold flex items-center justify-center gap-2 text-foreground">
         <Clock className="w-4 h-4" />
         {label}
       </label>
 
-      <div className="flex items-center justify-center gap-8">
+      {/* Picker */}
+      <div className="flex items-center justify-center gap-6 sm:gap-8">
         {/* Hour */}
-        <div className="flex flex-col items-center w-16">
-          <span className="text-2xl text-muted-foreground/40">
+        <div
+          className="flex flex-col items-center w-16"
+          {...useSwipe(
+            () => handleHourChange(getNext(hours, hour)),
+            () => handleHourChange(getPrev(hours, hour))
+          )}
+        >
+          <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {String(getPrev(hours, hour)).padStart(2, "0")}
           </span>
           <motion.span
@@ -90,20 +112,26 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
-            className="text-5xl font-bold text-white"
+            className="text-4xl sm:text-5xl font-bold text-foreground"
           >
             {String(hour).padStart(2, "0")}
           </motion.span>
-          <span className="text-2xl text-muted-foreground/40">
+          <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {String(getNext(hours, hour)).padStart(2, "0")}
           </span>
         </div>
 
-        <span className="text-5xl font-bold text-white">:</span>
+        <span className="text-4xl sm:text-5xl font-bold text-foreground">:</span>
 
         {/* Minute */}
-        <div className="flex flex-col items-center w-16">
-          <span className="text-2xl text-muted-foreground/40">
+        <div
+          className="flex flex-col items-center w-16"
+          {...useSwipe(
+            () => handleMinuteChange(getNext(minutes, minute)),
+            () => handleMinuteChange(getPrev(minutes, minute))
+          )}
+        >
+          <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {String(getPrev(minutes, minute)).padStart(2, "0")}
           </span>
           <motion.span
@@ -111,18 +139,24 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
-            className="text-5xl font-bold text-white"
+            className="text-4xl sm:text-5xl font-bold text-foreground"
           >
             {String(minute).padStart(2, "0")}
           </motion.span>
-          <span className="text-2xl text-muted-foreground/40">
+          <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {String(getNext(minutes, minute)).padStart(2, "0")}
           </span>
         </div>
 
         {/* Period */}
-        <div className="flex flex-col items-center w-16">
-          <span className="text-2xl text-muted-foreground/40">
+        <div
+          className="flex flex-col items-center w-16"
+          {...useSwipe(
+            () => handlePeriodChange(period === "AM" ? "PM" : "AM"),
+            () => handlePeriodChange(period === "AM" ? "PM" : "AM")
+          )}
+        >
+          <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {period === "AM" ? "PM" : "AM"}
           </span>
           <motion.span
@@ -130,33 +164,33 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
-            className="text-5xl font-bold text-white"
+            className="text-4xl sm:text-5xl font-bold text-foreground"
           >
             {period}
           </motion.span>
-          <span className="text-2xl text-muted-foreground/40">
+          <span className="text-xl sm:text-2xl text-muted-foreground/50">
             {period === "AM" ? "PM" : "AM"}
           </span>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex justify-center gap-6 mt-4">
+      {/* Buttons */}
+      <div className="flex justify-center gap-4 mt-4">
         <button
           onClick={() => handleHourChange(getNext(hours, hour))}
-          className="px-3 py-1 rounded-md border text-white hover:bg-white/10"
+          className="px-3 py-1 rounded-md border text-foreground hover:bg-muted"
         >
           Hour +
         </button>
         <button
           onClick={() => handleMinuteChange(getNext(minutes, minute))}
-          className="px-3 py-1 rounded-md border text-white hover:bg-white/10"
+          className="px-3 py-1 rounded-md border text-foreground hover:bg-muted"
         >
           Min +
         </button>
         <button
           onClick={() => handlePeriodChange(period === "AM" ? "PM" : "AM")}
-          className="px-3 py-1 rounded-md border text-white hover:bg-white/10"
+          className="px-3 py-1 rounded-md border text-foreground hover:bg-muted"
         >
           Switch
         </button>
