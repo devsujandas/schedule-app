@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react"
 import { Clock } from "lucide-react"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface TimePickerProps {
@@ -16,8 +15,6 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
   const [hour, setHour] = useState(12)
   const [minute, setMinute] = useState(0)
   const [period, setPeriod] = useState<"AM" | "PM">("AM")
-
-  const minuteScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const h = Math.floor(value)
@@ -62,116 +59,108 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
     updateTime(hour, minute, newPeriod)
   }
 
+  const getPrev = (arr: number[], current: number) => {
+    const idx = arr.indexOf(current)
+    return idx > 0 ? arr[idx - 1] : arr[arr.length - 1]
+  }
+
+  const getNext = (arr: number[], current: number) => {
+    const idx = arr.indexOf(current)
+    return idx < arr.length - 1 ? arr[idx + 1] : arr[0]
+  }
+
   const hours = Array.from({ length: 12 }, (_, i) => i + 1)
   const minutes = Array.from({ length: 60 }, (_, i) => i)
 
   return (
-    <div className="space-y-3">
-      <label className="text-sm font-semibold flex items-center gap-2 text-foreground">
+    <div className="space-y-3 text-center">
+      <label className="text-sm font-semibold flex items-center justify-center gap-2 text-foreground">
         <Clock className="w-4 h-4" />
         {label}
       </label>
 
-      <Card className="p-5 bg-gradient-to-br from-card to-card/50 border-2">
-        <div className="flex items-stretch gap-3">
-          {/* Hour Selector */}
-          <div className="flex-1">
-            <p className="text-xs font-semibold text-muted-foreground mb-3 text-center">Hour</p>
-            <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-              {hours.map((h) => (
-                <Button
-                  key={h}
-                  type="button"
-                  variant={hour === h ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleHourChange(h)}
-                  className={cn(
-                    "h-10 text-sm font-semibold transition-all duration-200",
-                    hour === h
-                      ? "shadow-md scale-105 bg-primary text-primary-foreground"
-                      : "hover:bg-secondary hover:scale-105 hover:border-primary/50",
-                  )}
-                >
-                  {h}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Minute Selector */}
-          <div className="flex-1">
-            <p className="text-xs font-semibold text-muted-foreground mb-3 text-center">Minute</p>
-            <div
-              ref={minuteScrollRef}
-              className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
-            >
-              {minutes.map((m) => (
-                <Button
-                  key={m}
-                  type="button"
-                  variant={minute === m ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleMinuteChange(m)}
-                  className={cn(
-                    "h-10 text-sm font-semibold transition-all duration-200",
-                    minute === m
-                      ? "shadow-md scale-105 bg-primary text-primary-foreground"
-                      : "hover:bg-secondary hover:scale-105 hover:border-primary/50",
-                  )}
-                >
-                  {String(m).padStart(2, "0")}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* AM/PM Selector */}
-          <div className="flex flex-col justify-center">
-            <p className="text-xs font-semibold text-muted-foreground mb-3 text-center">Period</p>
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                variant={period === "AM" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handlePeriodChange("AM")}
-                className={cn(
-                  "h-12 w-16 text-sm font-bold transition-all duration-200",
-                  period === "AM"
-                    ? "shadow-md scale-105 bg-primary text-primary-foreground"
-                    : "hover:bg-secondary hover:scale-105 hover:border-primary/50",
-                )}
-              >
-                AM
-              </Button>
-              <Button
-                type="button"
-                variant={period === "PM" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handlePeriodChange("PM")}
-                className={cn(
-                  "h-12 w-16 text-sm font-bold transition-all duration-200",
-                  period === "PM"
-                    ? "shadow-md scale-105 bg-primary text-primary-foreground"
-                    : "hover:bg-secondary hover:scale-105 hover:border-primary/50",
-                )}
-              >
-                PM
-              </Button>
-            </div>
-          </div>
+      <div className="flex items-center justify-center gap-8">
+        {/* Hour */}
+        <div className="flex flex-col items-center w-16">
+          <span className="text-2xl text-muted-foreground/40">
+            {String(getPrev(hours, hour)).padStart(2, "0")}
+          </span>
+          <motion.span
+            key={hour}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-5xl font-bold text-white"
+          >
+            {String(hour).padStart(2, "0")}
+          </motion.span>
+          <span className="text-2xl text-muted-foreground/40">
+            {String(getNext(hours, hour)).padStart(2, "0")}
+          </span>
         </div>
 
-        {/* Selected Time Display */}
-        <div className="mt-5 pt-4 border-t border-border">
-          <div className="flex items-center justify-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
-            <p className="text-2xl font-bold tracking-tight">
-              {String(hour).padStart(2, "0")}:{String(minute).padStart(2, "0")}
-              <span className="text-lg ml-2 text-muted-foreground">{period}</span>
-            </p>
-          </div>
+        <span className="text-5xl font-bold text-white">:</span>
+
+        {/* Minute */}
+        <div className="flex flex-col items-center w-16">
+          <span className="text-2xl text-muted-foreground/40">
+            {String(getPrev(minutes, minute)).padStart(2, "0")}
+          </span>
+          <motion.span
+            key={minute}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-5xl font-bold text-white"
+          >
+            {String(minute).padStart(2, "0")}
+          </motion.span>
+          <span className="text-2xl text-muted-foreground/40">
+            {String(getNext(minutes, minute)).padStart(2, "0")}
+          </span>
         </div>
-      </Card>
+
+        {/* Period */}
+        <div className="flex flex-col items-center w-16">
+          <span className="text-2xl text-muted-foreground/40">
+            {period === "AM" ? "PM" : "AM"}
+          </span>
+          <motion.span
+            key={period}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-5xl font-bold text-white"
+          >
+            {period}
+          </motion.span>
+          <span className="text-2xl text-muted-foreground/40">
+            {period === "AM" ? "PM" : "AM"}
+          </span>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex justify-center gap-6 mt-4">
+        <button
+          onClick={() => handleHourChange(getNext(hours, hour))}
+          className="px-3 py-1 rounded-md border text-white hover:bg-white/10"
+        >
+          Hour +
+        </button>
+        <button
+          onClick={() => handleMinuteChange(getNext(minutes, minute))}
+          className="px-3 py-1 rounded-md border text-white hover:bg-white/10"
+        >
+          Min +
+        </button>
+        <button
+          onClick={() => handlePeriodChange(period === "AM" ? "PM" : "AM")}
+          className="px-3 py-1 rounded-md border text-white hover:bg-white/10"
+        >
+          Switch
+        </button>
+      </div>
     </div>
   )
 }
