@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useScheduleStore } from "@/lib/store"
-import { Download, Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor, Smartphone,   Calendar, Lock, Zap  } from "lucide-react"
+import { Download, Upload, Trash2, RotateCcw, Loader2, Sun, Moon, Monitor, Smartphone,   Calendar, Lock, Zap, ActivityIcon, Clock  } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { InstallButton, useInstallState } from "@/components/install-button"
 
@@ -262,9 +262,9 @@ export function SettingsView() {
       {/* Info */}
       <Card className="p-6">
   <h3 className="font-semibold mb-4">About</h3>
-  <div className="space-y-2 text-sm text-muted-foreground text-center">
-    {/* Icon line centered */}
-    <div className="flex justify-center items-center gap-6 mb-2">
+  <div className="space-y-2 text-sm text-muted-foreground">
+    {/* Icon line added */}
+    <div className="flex items-center gap-6 mb-2">
       <div className="flex items-center gap-1">
         <Calendar className="w-4 h-4" />
         <span>Organized</span>
@@ -274,8 +274,8 @@ export function SettingsView() {
         <span>Private</span>
       </div>
       <div className="flex items-center gap-1">
-        <Zap className="w-4 h-4" />
-        <span>Always Ready</span>
+        <Clock className="w-4 h-4" />
+        <span>Instant</span>
       </div>
     </div>
 
