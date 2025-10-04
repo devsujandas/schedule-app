@@ -15,6 +15,7 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
   const [minute, setMinute] = useState(0)
   const [period, setPeriod] = useState<"AM" | "PM">("AM")
 
+  // Sync internal state with value prop
   useEffect(() => {
     const h = Math.floor(value)
     const m = Math.round((value % 1) * 60)
@@ -53,25 +54,33 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
   const hours = Array.from({ length: 12 }, (_, i) => i + 1)
   const minutes = Array.from({ length: 60 }, (_, i) => i)
 
-  // ---------- Smooth Scroll Logic ----------
+  // ---------- Improved Smooth Scroll Logic ----------
   const useSmoothScroll = (
     onScrollUp: () => void,
     onScrollDown: () => void
   ) => {
     const touchStartY = useRef(0)
+    const lastScrollTime = useRef(0)
 
     const handleDelta = (delta: number) => {
+      const now = Date.now()
+      if (now - lastScrollTime.current < 50) return // throttle
+
+      lastScrollTime.current = now
+
       const absDelta = Math.abs(delta)
-      const steps = absDelta < 20 ? 1 : absDelta < 50 ? 2 : absDelta < 100 ? 3 : 4
-      if (delta > 0) {
-        for (let i = 0; i < steps; i++) onScrollDown()
-      } else {
-        for (let i = 0; i < steps; i++) onScrollUp()
-      }
+      let steps = 1
+      if (absDelta > 100) steps = 4
+      else if (absDelta > 50) steps = 3
+      else if (absDelta > 20) steps = 2
+
+      if (delta > 0) for (let i = 0; i < steps; i++) onScrollDown()
+      else for (let i = 0; i < steps; i++) onScrollUp()
     }
 
     return {
       onWheel: (e: React.WheelEvent) => {
+        e.preventDefault()
         handleDelta(e.deltaY)
       },
       onTouchStart: (e: React.TouchEvent) => {
