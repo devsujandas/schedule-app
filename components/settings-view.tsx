@@ -20,6 +20,17 @@ export function SettingsView() {
   const [isResetting, setIsResetting] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
 
+  // --- APK Download Handler ---
+  const handleApkDownload = () => {
+    const apkUrl = "/downloads/Schedule.apk" // must be in public folder
+    const link = document.createElement("a")
+    link.href = apkUrl
+    link.download = "Schedule.apk"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const handleExport = async () => {
     setIsExporting(true)
     await new Promise((resolve) => setTimeout(resolve, 800))
@@ -67,7 +78,6 @@ export function SettingsView() {
     await new Promise((resolve) => setTimeout(resolve, 800))
     resetToDefault()
     setIsResetting(false)
-    // Redirect to home page
     window.location.href = "/"
   }
 
@@ -76,7 +86,6 @@ export function SettingsView() {
     await new Promise((resolve) => setTimeout(resolve, 800))
     clearAllData()
     setIsClearing(false)
-    // Redirect to home page
     window.location.href = "/"
   }
 
@@ -98,6 +107,11 @@ export function SettingsView() {
               <p className="text-xs text-muted-foreground mt-2">
                 Install this app on your device for quick access and offline use
               </p>
+              {/* --- APK Download Button --- */}
+              <Button onClick={handleApkDownload} className="gap-2 w-full sm:w-auto mt-2">
+                <Download className="w-4 h-4" />
+                Download APK
+              </Button>
             </div>
           </div>
         </Card>
