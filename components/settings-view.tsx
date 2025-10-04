@@ -260,14 +260,19 @@ export function SettingsView() {
       </Card>
 
       {/* Info */}
-      <Card className="p-6">
+   <Card className="p-6">
   <h3 className="font-semibold mb-4">About</h3>
   <div className="space-y-2 text-sm text-muted-foreground">
-    
-     <p>Your schedule — organized, private, and always ready.</p>
+    <p>Your schedule — organized, private, and always ready.</p>
     <p>Current schedule items: {scheduleItems.length}</p>
-    <p>Schedule App v2.3</p>
-    {/* Icon line added */}
+    <p>
+      Schedulaar App v2.3{" "}
+      <span className="inline-block bg-yellow-200 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full align-middle ml-2">
+        Beta
+      </span>
+    </p>
+
+    {/* Icon line */}
     <div className="flex items-center gap-6 mb-2">
       <div className="flex items-center gap-1">
         <Calendar className="w-4 h-4" />
@@ -282,10 +287,9 @@ export function SettingsView() {
         <span>Instant</span>
       </div>
     </div>
-
-   
   </div>
 </Card>
+
     </div>
   )
 }
