@@ -1,31 +1,24 @@
 "use client"
 
-import type React from "react"
-import {
-  Bold as IconBold,
-  Italic as IconItalic,
-  Underline as IconUnderline,
-  ListOrdered as IconListOrdered,
-  ListOrdered as IconListUnordered,
-  Icon as IconH1,
-  Icon as IconH2,
-  GitCompareArrows as IconParagraph,
-  Quote as IconQuote,
-  AlignLeft as IconAlignLeft,
-  AlignCenter as IconAlignCenter,
-  AlignRight as IconAlignRight,
-  ScanLine as IconLinkLucide,
-  IceCream as IconClear,
-  Cable as IconTable,
-  Columns as IconColumns,
-  DiamondPlus as IconPlus,
-  BookMinus as IconMinus,
-  Heading1Icon,
-  Heading2Icon,
-} from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import {
+  Bold,
+  Italic,
+  Underline,
+  ListOrdered,
+  List,
+  Quote,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Link as LinkIcon,
+  Eraser,
+  Table,
+  Undo,
+  Redo,
+} from "lucide-react"
 import { useNotesStore } from "@/lib/notesStore"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,14 +28,12 @@ type Cmd =
   | "bold"
   | "italic"
   | "underline"
-  | "insertUnorderedList"
-  | "insertOrderedList"
-  | "undo"
-  | "redo"
-  | "removeFormat"
   | "justifyLeft"
   | "justifyCenter"
   | "justifyRight"
+  | "removeFormat"
+  | "undo"
+  | "redo"
 
 export default function EditorPage() {
   const router = useRouter()
@@ -66,6 +57,10 @@ export default function EditorPage() {
   const savedRangeRef = useRef<Range | null>(null)
   const lastSnapshotRef = useRef<{ title: string; html: string } | null>(null)
 
+  const [showLinkPopup, setShowLinkPopup] = useState(false)
+  const [linkUrl, setLinkUrl] = useState("")
+
+  // Load note
   useEffect(() => {
     if (!hasHydrated) return
     if (editorRef.current && note) {
@@ -79,59 +74,135 @@ export default function EditorPage() {
     }
   }, [note, hasHydrated])
 
-  useEffect(() => {
-    if (id) setCurrentId(id)
-  }, [id])
+  // selection utils
+  function saveSelection() {
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0) {
+      savedRangeRef.current = sel.getRangeAt(0)
+    }
+  }
 
+  function restoreSelection() {
+    const range = savedRangeRef.current
+    if (!range) return
+    const sel = window.getSelection()
+    if (!sel) return
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+
+  function ensureSelection() {
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0) {
+      savedRangeRef.current = sel.getRangeAt(0)
+      return
+    }
+    const el = editorRef.current
+    if (!el) return
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    range.collapse(false)
+    sel?.removeAllRanges()
+    sel?.addRange(range)
+    savedRangeRef.current = range
+  }
+
+  // execute command
   function exec(cmd: Cmd) {
     ensureSelection()
+    restoreSelection()
     document.execCommand(cmd, false)
     editorRef.current?.focus()
     saveSelection()
   }
 
-  function formatBlock(tag: "P" | "H1" | "H2" | "BLOCKQUOTE") {
+  // custom toggle functions for lists & blockquote
+  function toggleList(type: "ul" | "ol") {
     ensureSelection()
+    restoreSelection()
+    const sel = window.getSelection()
+    if (!sel || !sel.rangeCount) return
+    const range = sel.getRangeAt(0)
+    let container = range.startContainer as HTMLElement
+    while (container && container !== editorRef.current && container.nodeName !== "DIV" && container.nodeName !== "P" && container.nodeName !== "LI") {
+      container = container.parentElement as HTMLElement
+    }
+    if (!container || container === editorRef.current) return
+    if (container.parentElement?.nodeName.toLowerCase() !== type) {
+      const list = document.createElement(type)
+      const li = document.createElement("li")
+      li.innerHTML = container.innerHTML
+      list.appendChild(li)
+      container.replaceWith(list)
+    } else {
+      const parentList = container.parentElement
+      if (parentList) {
+        const p = document.createElement("p")
+        p.innerHTML = container.innerHTML
+        parentList.replaceWith(p)
+      }
+    }
+    saveSelection()
+  }
+
+  function toggleBlockquote() {
+    ensureSelection()
+    restoreSelection()
+    const sel = window.getSelection()
+    if (!sel || !sel.rangeCount) return
+    const range = sel.getRangeAt(0)
+    let container = range.startContainer as HTMLElement
+    while (container && container !== editorRef.current && container.nodeName !== "DIV" && container.nodeName !== "P" && container.nodeName !== "BLOCKQUOTE") {
+      container = container.parentElement as HTMLElement
+    }
+    if (!container || container === editorRef.current) return
+    if (container.nodeName === "BLOCKQUOTE") {
+      const p = document.createElement("p")
+      p.innerHTML = container.innerHTML
+      container.replaceWith(p)
+    } else {
+      const blockquote = document.createElement("blockquote")
+      blockquote.innerHTML = container.innerHTML
+      container.replaceWith(blockquote)
+    }
+    saveSelection()
+  }
+
+  function formatBlock(tag: "P") {
+    ensureSelection()
+    restoreSelection()
     document.execCommand("formatBlock", false, `<${tag.toLowerCase()}>`)
     editorRef.current?.focus()
     saveSelection()
   }
 
-  function createLink() {
+  // custom link popup
+  function openLinkPopup() {
+    setShowLinkPopup(true)
+  }
+
+  function applyLink() {
+    if (!linkUrl.trim()) return
     ensureSelection()
-    const url = prompt("Enter URL")
-    if (!url) return
-    document.execCommand("createLink", false, url)
+    restoreSelection()
+    document.execCommand("createLink", false, linkUrl)
+    setLinkUrl("")
+    setShowLinkPopup(false)
     editorRef.current?.focus()
     saveSelection()
   }
 
   function clearFormatting() {
     ensureSelection()
+    restoreSelection()
     document.execCommand("removeFormat", false)
+    document.execCommand("unlink", false)
     document.execCommand("formatBlock", false, "<p>")
     editorRef.current?.focus()
     saveSelection()
   }
 
-  function getSelectionContainer(): HTMLElement | null {
-    const sel = window.getSelection()
-    if (!sel || sel.rangeCount === 0) return null
-    let node = sel.getRangeAt(0).startContainer as Node | null
-    while (node && node.nodeType !== 1) node = node.parentNode
-    return node as HTMLElement | null
-  }
-
-  function closest(el: HTMLElement | null, selector: string): HTMLElement | null {
-    if (!el) return null
-    if (el.closest) return el.closest(selector) as HTMLElement | null
-    while (el) {
-      if ((el as any).matches && (el as any).matches(selector)) return el
-      el = el.parentElement as HTMLElement | null
-    }
-    return null
-  }
-
+  // table insertion
   function insertTable(rows = 3, cols = 3) {
     ensureSelection()
     const table = document.createElement("table")
@@ -165,90 +236,7 @@ export default function EditorPage() {
     }
   }
 
-  function getActiveTable(): HTMLTableElement | null {
-    const container = getSelectionContainer()
-    const table = closest(container, "table") as HTMLTableElement | null
-    return table
-  }
-
-  function addRow(after = true) {
-    const table = getActiveTable()
-    if (!table) return
-    const container = getSelectionContainer()
-    const currentRow = closest(container, "tr") as HTMLTableRowElement | null
-    if (!currentRow) return
-    const newRow = currentRow.cloneNode(true) as HTMLTableRowElement
-    newRow.querySelectorAll("td").forEach((td) => (td.innerHTML = "&nbsp;"))
-    currentRow.parentElement?.insertBefore(newRow, after ? currentRow.nextSibling : currentRow)
-  }
-
-  function removeRow() {
-    const table = getActiveTable()
-    if (!table) return
-    const container = getSelectionContainer()
-    const currentRow = closest(container, "tr") as HTMLTableRowElement | null
-    if (!currentRow) return
-    currentRow.remove()
-  }
-
-  function addColumn(after = true) {
-    const table = getActiveTable()
-    if (!table) return
-    const container = getSelectionContainer()
-    const currentCell = closest(container, "td,th") as HTMLTableCellElement | null
-    if (!currentCell) return
-    const cellIndex = Array.from(currentCell.parentElement!.children).indexOf(currentCell)
-    table.querySelectorAll("tr").forEach((tr) => {
-      const cells = Array.from(tr.children)
-      const newCell = (
-        currentCell.tagName === "TH" ? document.createElement("th") : document.createElement("td")
-      ) as HTMLTableCellElement
-      newCell.innerHTML = "&nbsp;"
-      tr.insertBefore(newCell, after ? cells[cellIndex].nextSibling : cells[cellIndex])
-    })
-  }
-
-  function removeColumn() {
-    const table = getActiveTable()
-    if (!table) return
-    const container = getSelectionContainer()
-    const currentCell = closest(container, "td,th") as HTMLTableCellElement | null
-    if (!currentCell) return
-    const cellIndex = Array.from(currentCell.parentElement!.children).indexOf(currentCell)
-    table.querySelectorAll("tr").forEach((tr) => {
-      const cells = Array.from(tr.children)
-      if (cells[cellIndex]) cells[cellIndex].remove()
-    })
-  }
-
-  function deleteTable() {
-    const table = getActiveTable()
-    if (!table) return
-    table.remove()
-  }
-
-  function onSave() {
-    const contentHtml = editorRef.current?.innerHTML || ""
-    if (currentId && note) {
-      updateNote(currentId, { title, contentHtml })
-      setStatus("saved")
-      setLastSavedAt(Date.now())
-      return
-    }
-    const newId = addNote({ title, contentHtml })
-    setCurrentId(newId)
-    setStatus("saved")
-    setLastSavedAt(Date.now())
-    router.replace(`/notes/editor?id=${encodeURIComponent(newId)}`)
-  }
-
-  function onDelete() {
-    if (currentId) {
-      deleteNote(currentId)
-    }
-    router.push("/notes")
-  }
-
+  // autosave
   useEffect(() => {
     if (!hasHydrated) return
     const tick = () => {
@@ -260,69 +248,29 @@ export default function EditorPage() {
       setStatus("saving")
       if (currentId) {
         updateNote(currentId, { title, contentHtml: html })
-        setStatus("saved")
-        setLastSavedAt(Date.now())
       } else {
         const newId = addNote({ title, contentHtml: html })
         setCurrentId(newId)
-        setStatus("saved")
-        setLastSavedAt(Date.now())
         router.replace(`/notes/editor?id=${encodeURIComponent(newId)}`)
       }
       lastSnapshotRef.current = nextSnap
+      setStatus("saved")
+      setLastSavedAt(Date.now())
     }
-    const interval = setInterval(tick, 3000)
+    const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [title, contentHtmlState, hasHydrated])
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault()
-        onSave()
-      }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [title, contentHtmlState, hasHydrated])
-
-  function saveSelection() {
-    const sel = window.getSelection()
-    if (sel && sel.rangeCount > 0) {
-      savedRangeRef.current = sel.getRangeAt(0)
-    }
-  }
-
-  function restoreSelection() {
-    const range = savedRangeRef.current
-    if (!range) return
-    const sel = window.getSelection()
-    if (!sel) return
-    sel.removeAllRanges()
-    sel.addRange(range)
-  }
-
-  function ensureSelection() {
-    const sel = window.getSelection()
-    if (sel && sel.rangeCount > 0) {
-      savedRangeRef.current = sel.getRangeAt(0)
-      return
-    }
-    const el = editorRef.current
-    if (!el) return
-    const range = document.createRange()
-    range.selectNodeContents(el)
-    range.collapse(false)
-    sel?.removeAllRanges()
-    sel?.addRange(range)
-    savedRangeRef.current = range
+  // delete
+  function onDelete() {
+    if (currentId) deleteNote(currentId)
+    router.push("/notes")
   }
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8">
       <header className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-pretty text-2xl font-semibold text-foreground">Editor</h1>
           <p className="text-muted-foreground text-sm">{id ? "Edit your note" : "Create a new note"}</p>
         </div>
         <Button variant="secondary" asChild>
@@ -335,107 +283,51 @@ export default function EditorPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-foreground">
+            <CardTitle>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Title"
                 className="bg-background text-foreground"
-                aria-label="Note title"
               />
             </CardTitle>
           </CardHeader>
+
           <CardContent className="flex flex-col gap-3">
+            {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-2">
-              <ToolbarButton ariaLabel="Bold" onAction={() => exec("bold")}>
-                <IconBold className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Italic" onAction={() => exec("italic")}>
-                <IconItalic className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Underline" onAction={() => exec("underline")}>
-                <IconUnderline className="h-4 w-4" />
-              </ToolbarButton>
-              <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
-              <ToolbarButton ariaLabel="Bulleted list" onAction={() => exec("insertUnorderedList")}>
-                <IconListUnordered className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Numbered list" onAction={() => exec("insertOrderedList")}>
-                <IconListOrdered className="h-4 w-4" />
-              </ToolbarButton>
-              <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
-              <ToolbarButton ariaLabel="Heading 1" onAction={() => formatBlock("H1")}>
-                <Heading1Icon className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Heading 2" onAction={() => formatBlock("H2")}>
-                <Heading2Icon className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Paragraph" onAction={() => formatBlock("P")}>
-                <IconParagraph className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Blockquote" onAction={() => formatBlock("BLOCKQUOTE")}>
-                <IconQuote className="h-4 w-4" />
-              </ToolbarButton>
-              <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
-              <ToolbarButton ariaLabel="Align left" onAction={() => exec("justifyLeft")}>
-                <IconAlignLeft className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Align center" onAction={() => exec("justifyCenter")}>
-                <IconAlignCenter className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Align right" onAction={() => exec("justifyRight")}>
-                <IconAlignRight className="h-4 w-4" />
-              </ToolbarButton>
-              <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
-              <ToolbarButton ariaLabel="Insert link" onAction={createLink}>
-                <IconLinkLucide className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Clear formatting" onAction={clearFormatting}>
-                <IconClear className="h-4 w-4" />
-              </ToolbarButton>
-              <span className="mx-2 h-5 w-px bg-border" aria-hidden="true" />
-              <ToolbarButton ariaLabel="Insert table" onAction={() => insertTable(3, 3)}>
-                <IconTable className="h-4 w-4" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Add row" onAction={() => addRow(true)}>
-                <IconTable className="h-4 w-4" />
-                <IconPlus className="ml-1 h-3 w-3" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Remove row" onAction={removeRow}>
-                <IconTable className="h-4 w-4" />
-                <IconMinus className="ml-1 h-3 w-3" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Add column" onAction={() => addColumn(true)}>
-                <IconColumns className="h-4 w-4" />
-                <IconPlus className="ml-1 h-3 w-3" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Remove column" onAction={removeColumn}>
-                <IconColumns className="h-4 w-4" />
-                <IconMinus className="ml-1 h-3 w-3" />
-              </ToolbarButton>
-              <ToolbarButton ariaLabel="Delete table" onAction={deleteTable}>
-                <IconTable className="h-4 w-4" />
-                <IconClear className="ml-1 h-3 w-3" />
-              </ToolbarButton>
+              <ToolbarButton onAction={() => exec("bold")}><Bold className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => exec("italic")}><Italic className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => exec("underline")}><Underline className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => toggleList("ul")}><List className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => toggleList("ol")}><ListOrdered className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={toggleBlockquote}><Quote className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => exec("justifyLeft")}><AlignLeft className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => exec("justifyCenter")}><AlignCenter className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => exec("justifyRight")}><AlignRight className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={openLinkPopup}><LinkIcon className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={clearFormatting}><Eraser className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => insertTable(3, 3)}><Table className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => exec("undo")}><Undo className="h-4 w-4" /></ToolbarButton>
+              <ToolbarButton onAction={() => exec("redo")}><Redo className="h-4 w-4" /></ToolbarButton>
             </div>
 
+            {/* Editor */}
             <div
               ref={editorRef}
               className="min-h-[320px] w-full rounded-md border bg-background p-4 text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
               contentEditable
-              role="textbox"
-              aria-multiline="true"
-              aria-label="Note content editor"
               suppressContentEditableWarning
-              onMouseUp={saveSelection}
-              onKeyUp={saveSelection}
               onInput={(e) => {
                 saveSelection()
                 setContentHtmlState((e.currentTarget as HTMLDivElement).innerHTML)
               }}
               onFocus={saveSelection}
+              onMouseUp={saveSelection}
+              onKeyUp={saveSelection}
             />
 
+            {/* Footer */}
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div>
                 {status === "saving"
@@ -461,53 +353,66 @@ export default function EditorPage() {
               </div>
             </div>
           </CardContent>
+
           <CardFooter className="flex items-center justify-between">
-            <div className="text-muted-foreground text-xs">
-              {currentId && note ? `Last updated ${new Date(note.updatedAt).toLocaleString()}` : "New note"}
+            <div className="text-xs text-muted-foreground">
+              {currentId && note
+                ? `Last updated ${new Date(note.updatedAt).toLocaleString()}`
+                : "New note"}
             </div>
             <div className="flex items-center gap-2">
-              {currentId ? (
+              {currentId && (
                 <Button variant="destructive" onClick={onDelete}>
                   Delete
                 </Button>
-              ) : null}
-              <Button onClick={onSave}>Save</Button>
+              )}
+              <Button onClick={() => updateNote(currentId!, { title, contentHtml: editorRef.current?.innerHTML || "" })}>
+                Save
+              </Button>
             </div>
           </CardFooter>
         </Card>
+      )}
+
+      {/* Link popup */}
+      {showLinkPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white dark:bg-gray-900 p-4 rounded-md shadow-lg w-[300px] space-y-3">
+            <h3 className="font-semibold text-lg text-foreground">Insert Link</h3>
+            <input
+              type="url"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://example.com"
+              className="w-full border p-2 rounded bg-background text-foreground"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setShowLinkPopup(false)}>Cancel</Button>
+              <Button onClick={applyLink}>Apply</Button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   )
 }
 
-function ToolbarButton({
-  onAction,
-  children,
-  ariaLabel,
-}: {
-  onAction: () => void
-  children: React.ReactNode
-  ariaLabel?: string
-}) {
+// helper components & utils
+function ToolbarButton({ onAction, children }: { onAction: () => void; children: React.ReactNode }) {
   return (
     <Button
       type="button"
       variant="outline"
       size="sm"
-      aria-label={ariaLabel}
+      className="bg-background text-foreground"
       onMouseDown={(e) => {
         e.preventDefault()
         onAction()
       }}
-      className="bg-background text-foreground"
     >
       {children}
     </Button>
   )
-}
-
-function ToolbarIcon({ children }: { children: React.ReactNode }) {
-  return <span className="text-sm">{children}</span>
 }
 
 function stripHtml(html: string): string {
