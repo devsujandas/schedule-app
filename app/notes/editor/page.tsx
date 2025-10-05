@@ -7,22 +7,21 @@ import {
   Bold,
   Italic,
   Underline,
-  ListOrdered,
-  List,
-  Quote,
   AlignLeft,
   AlignCenter,
   AlignRight,
-  Link as LinkIcon,
   Eraser,
   Table,
   Undo,
   Redo,
+  Minus,
+  CheckSquare,
 } from "lucide-react"
 import { useNotesStore } from "@/lib/notesStore"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { useTheme } from "next-themes"
 
 type Cmd =
   | "bold"
@@ -39,6 +38,7 @@ export default function EditorPage() {
   const router = useRouter()
   const params = useSearchParams()
   const id = params.get("id") || undefined
+  const { theme } = useTheme()
 
   const getNoteById = useNotesStore((s) => s.getNoteById)
   const addNote = useNotesStore((s) => s.addNote)
@@ -57,10 +57,11 @@ export default function EditorPage() {
   const savedRangeRef = useRef<Range | null>(null)
   const lastSnapshotRef = useRef<{ title: string; html: string } | null>(null)
 
-  const [showLinkPopup, setShowLinkPopup] = useState(false)
-  const [linkUrl, setLinkUrl] = useState("")
+  const [fontFamily, setFontFamily] = useState("Arial")
+  const [fontSize, setFontSize] = useState("16px")
+  const [copied, setCopied] = useState(false)
 
-  // Load note
+  // Load note content
   useEffect(() => {
     if (!hasHydrated) return
     if (editorRef.current && note) {
@@ -74,15 +75,12 @@ export default function EditorPage() {
     }
   }, [note, hasHydrated])
 
-  // selection utils
-  function saveSelection() {
+  // Selection utils
+  const saveSelection = () => {
     const sel = window.getSelection()
-    if (sel && sel.rangeCount > 0) {
-      savedRangeRef.current = sel.getRangeAt(0)
-    }
+    if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0)
   }
-
-  function restoreSelection() {
+  const restoreSelection = () => {
     const range = savedRangeRef.current
     if (!range) return
     const sel = window.getSelection()
@@ -90,124 +88,73 @@ export default function EditorPage() {
     sel.removeAllRanges()
     sel.addRange(range)
   }
+  const ensureFocus = () => editorRef.current?.focus()
 
-  function ensureSelection() {
-    const sel = window.getSelection()
-    if (sel && sel.rangeCount > 0) {
-      savedRangeRef.current = sel.getRangeAt(0)
-      return
-    }
-    const el = editorRef.current
-    if (!el) return
-    const range = document.createRange()
-    range.selectNodeContents(el)
-    range.collapse(false)
-    sel?.removeAllRanges()
-    sel?.addRange(range)
-    savedRangeRef.current = range
-  }
-
-  // execute command
-  function exec(cmd: Cmd) {
-    ensureSelection()
+  // Exec Commands
+  const exec = (cmd: Cmd) => {
+    ensureFocus()
     restoreSelection()
     document.execCommand(cmd, false)
-    editorRef.current?.focus()
     saveSelection()
   }
 
-  // custom toggle functions for lists & blockquote
-  function toggleList(type: "ul" | "ol") {
-    ensureSelection()
+  // Insert HR
+  const insertHorizontalLine = () => {
+    ensureFocus()
     restoreSelection()
-    const sel = window.getSelection()
-    if (!sel || !sel.rangeCount) return
-    const range = sel.getRangeAt(0)
-    let container = range.startContainer as HTMLElement
-    while (container && container !== editorRef.current && container.nodeName !== "DIV" && container.nodeName !== "P" && container.nodeName !== "LI") {
-      container = container.parentElement as HTMLElement
-    }
-    if (!container || container === editorRef.current) return
-    if (container.parentElement?.nodeName.toLowerCase() !== type) {
-      const list = document.createElement(type)
-      const li = document.createElement("li")
-      li.innerHTML = container.innerHTML
-      list.appendChild(li)
-      container.replaceWith(list)
+    document.execCommand("insertHorizontalRule")
+    saveSelection()
+  }
+
+  // Insert Checkbox
+  const insertCheckbox = () => {
+    ensureFocus()
+    restoreSelection()
+    const checkbox = document.createElement("input")
+    checkbox.type = "checkbox"
+    checkbox.className = "inline-block mr-1 align-middle"
+    const range = savedRangeRef.current
+    if (range) {
+      range.insertNode(checkbox)
     } else {
-      const parentList = container.parentElement
-      if (parentList) {
-        const p = document.createElement("p")
-        p.innerHTML = container.innerHTML
-        parentList.replaceWith(p)
-      }
+      editorRef.current?.appendChild(checkbox)
     }
     saveSelection()
   }
 
-  function toggleBlockquote() {
-    ensureSelection()
+  // Font controls
+  const changeFontFamily = (family: string) => {
+    setFontFamily(family)
+    ensureFocus()
     restoreSelection()
-    const sel = window.getSelection()
-    if (!sel || !sel.rangeCount) return
-    const range = sel.getRangeAt(0)
-    let container = range.startContainer as HTMLElement
-    while (container && container !== editorRef.current && container.nodeName !== "DIV" && container.nodeName !== "P" && container.nodeName !== "BLOCKQUOTE") {
-      container = container.parentElement as HTMLElement
+    document.execCommand("fontName", false, family)
+    saveSelection()
+  }
+
+  const changeFontSize = (size: string) => {
+    setFontSize(size)
+    ensureFocus()
+    restoreSelection()
+    document.execCommand("fontSize", false, "7")
+    const fonts = editorRef.current?.getElementsByTagName("font")
+    if (fonts) {
+      Array.from(fonts).forEach((el) => {
+        if (el.size === "7") {
+          el.removeAttribute("size")
+          el.style.fontSize = size
+        }
+      })
     }
-    if (!container || container === editorRef.current) return
-    if (container.nodeName === "BLOCKQUOTE") {
-      const p = document.createElement("p")
-      p.innerHTML = container.innerHTML
-      container.replaceWith(p)
-    } else {
-      const blockquote = document.createElement("blockquote")
-      blockquote.innerHTML = container.innerHTML
-      container.replaceWith(blockquote)
-    }
     saveSelection()
   }
 
-  function formatBlock(tag: "P") {
-    ensureSelection()
-    restoreSelection()
-    document.execCommand("formatBlock", false, `<${tag.toLowerCase()}>`)
-    editorRef.current?.focus()
-    saveSelection()
-  }
-
-  // custom link popup
-  function openLinkPopup() {
-    setShowLinkPopup(true)
-  }
-
-  function applyLink() {
-    if (!linkUrl.trim()) return
-    ensureSelection()
-    restoreSelection()
-    document.execCommand("createLink", false, linkUrl)
-    setLinkUrl("")
-    setShowLinkPopup(false)
-    editorRef.current?.focus()
-    saveSelection()
-  }
-
-  function clearFormatting() {
-    ensureSelection()
-    restoreSelection()
-    document.execCommand("removeFormat", false)
-    document.execCommand("unlink", false)
-    document.execCommand("formatBlock", false, "<p>")
-    editorRef.current?.focus()
-    saveSelection()
-  }
-
-  // table insertion
-  function insertTable(rows = 3, cols = 3) {
-    ensureSelection()
+  // Insert Table
+  const insertTable = (rows = 3, cols = 3) => {
+    ensureFocus()
     const table = document.createElement("table")
     table.setAttribute("border", "1")
-    table.className = "w-full border-collapse [&_td]:border [&_td]:p-2"
+    table.className =
+      "w-full border-collapse border border-foreground/20 [&_td]:border [&_td]:border-foreground/20 [&_td]:p-2"
     for (let r = 0; r < rows; r++) {
       const tr = document.createElement("tr")
       for (let c = 0; c < cols; c++) {
@@ -224,19 +171,20 @@ export default function EditorPage() {
     } else {
       editorRef.current?.appendChild(table)
     }
-    const firstCell = table.querySelector("td")
-    if (firstCell) {
-      const r = document.createRange()
-      r.selectNodeContents(firstCell)
-      r.collapse(true)
-      const sel = window.getSelection()
-      sel?.removeAllRanges()
-      sel?.addRange(r)
-      saveSelection()
-    }
+    saveSelection()
   }
 
-  // autosave
+  // Clear Formatting
+  const clearFormatting = () => {
+    ensureFocus()
+    restoreSelection()
+    document.execCommand("removeFormat", false)
+    document.execCommand("unlink", false)
+    document.execCommand("formatBlock", false, "<p>")
+    saveSelection()
+  }
+
+  // Autosave
   useEffect(() => {
     if (!hasHydrated) return
     const tick = () => {
@@ -261,18 +209,42 @@ export default function EditorPage() {
     return () => clearInterval(interval)
   }, [title, contentHtmlState, hasHydrated])
 
-  // delete
-  function onDelete() {
+  const onDelete = () => {
     if (currentId) deleteNote(currentId)
     router.push("/notes")
   }
 
+  // ✅ Safe Copy Handler
+  const handleCopy = async () => {
+    const text = stripHtml(editorRef.current?.innerHTML || "")
+    if (!text) return
+
+    try {
+      if (navigator?.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const textArea = document.createElement("textarea")
+        textArea.value = text
+        textArea.style.position = "fixed"
+        textArea.style.opacity = "0"
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textArea)
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1200)
+    } catch (e) {
+      console.error("Copy failed:", e)
+      alert("Copy failed. Please try again.")
+    }
+  }
+
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8">
+    <main className="mx-auto w-full max-w-4xl px-4 py-8 transition-colors duration-300">
       <header className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-muted-foreground text-sm">{id ? "Edit your note" : "Create a new note"}</p>
-        </div>
+        <p className="text-sm text-muted-foreground">{id ? "Edit your note" : "Create a new note"}</p>
         <Button variant="secondary" asChild>
           <Link href="/notes">Back to Notes</Link>
         </Button>
@@ -281,41 +253,68 @@ export default function EditorPage() {
       {!hasHydrated ? (
         <div className="text-muted-foreground">Loading editor…</div>
       ) : (
-        <Card>
-          <CardHeader>
+        <Card className="shadow-xl border rounded-2xl overflow-hidden bg-transparent">
+          <CardHeader className="p-4 border-b">
             <CardTitle>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Title"
-                className="bg-background text-foreground"
+                className="bg-transparent text-lg font-semibold"
               />
             </CardTitle>
           </CardHeader>
 
-          <CardContent className="flex flex-col gap-3">
-            {/* Toolbar */}
-            <div className="flex flex-wrap items-center gap-2">
-              <ToolbarButton onAction={() => exec("bold")}><Bold className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => exec("italic")}><Italic className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => exec("underline")}><Underline className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => toggleList("ul")}><List className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => toggleList("ol")}><ListOrdered className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={toggleBlockquote}><Quote className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => exec("justifyLeft")}><AlignLeft className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => exec("justifyCenter")}><AlignCenter className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => exec("justifyRight")}><AlignRight className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={openLinkPopup}><LinkIcon className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={clearFormatting}><Eraser className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => insertTable(3, 3)}><Table className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => exec("undo")}><Undo className="h-4 w-4" /></ToolbarButton>
-              <ToolbarButton onAction={() => exec("redo")}><Redo className="h-4 w-4" /></ToolbarButton>
-            </div>
+          {/* Toolbar */}
+          <div className="sticky top-0 z-10 flex flex-wrap items-center justify-center gap-2 border-b bg-background/70 backdrop-blur-md p-3">
+            <ToolbarButton onAction={() => exec("bold")}><Bold className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={() => exec("italic")}><Italic className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={() => exec("underline")}><Underline className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={() => exec("justifyLeft")}><AlignLeft className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={() => exec("justifyCenter")}><AlignCenter className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={() => exec("justifyRight")}><AlignRight className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={insertHorizontalLine}><Minus className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={insertCheckbox}><CheckSquare className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={() => insertTable(3, 3)}><Table className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={clearFormatting}><Eraser className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={() => exec("undo")}><Undo className="h-4 w-4" /></ToolbarButton>
+            <ToolbarButton onAction={() => exec("redo")}><Redo className="h-4 w-4" /></ToolbarButton>
 
-            {/* Editor */}
+            {/* Font Controls */}
+            <div className="flex items-center gap-2">
+              <select
+                value={fontFamily}
+                onChange={(e) => changeFontFamily(e.target.value)}
+                className="rounded border bg-transparent p-1 text-sm"
+              >
+                <option>Arial</option>
+                <option>Georgia</option>
+                <option>Times New Roman</option>
+                <option>Courier New</option>
+                <option>Verdana</option>
+                <option>Monospace</option>
+              </select>
+
+              <select
+                value={fontSize}
+                onChange={(e) => changeFontSize(e.target.value)}
+                className="rounded border bg-transparent p-1 text-sm"
+              >
+                <option value="12px">12px</option>
+                <option value="14px">14px</option>
+                <option value="16px">16px</option>
+                <option value="18px">18px</option>
+                <option value="20px">20px</option>
+                <option value="24px">24px</option>
+              </select>
+            </div>
+          </div>
+
+          <CardContent className="p-0">
             <div
               ref={editorRef}
-              className="min-h-[320px] w-full rounded-md border bg-background p-4 text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-h-[340px] w-full border-y p-4 outline-none transition-all text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              style={{ fontFamily, fontSize }}
               contentEditable
               suppressContentEditableWarning
               onInput={(e) => {
@@ -327,34 +326,24 @@ export default function EditorPage() {
               onKeyUp={saveSelection}
             />
 
-            {/* Footer */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground p-3">
               <div>
                 {status === "saving"
                   ? "Saving…"
                   : status === "saved" && lastSavedAt
                     ? `Saved ${new Date(lastSavedAt).toLocaleTimeString()}`
-                    : " "}
+                    : ""}
               </div>
               <div className="flex items-center gap-2">
                 <span>{wordCount(editorRef.current?.innerHTML || "")} words</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    const text = stripHtml(editorRef.current?.innerHTML || "")
-                    try {
-                      await navigator.clipboard.writeText(text)
-                    } catch {}
-                  }}
-                >
-                  Copy
+                <Button variant="outline" size="sm" onClick={handleCopy}>
+                  {copied ? "Copied!" : "Copy"}
                 </Button>
               </div>
             </div>
           </CardContent>
 
-          <CardFooter className="flex items-center justify-between">
+          <CardFooter className="flex flex-wrap items-center justify-between gap-2 p-4">
             <div className="text-xs text-muted-foreground">
               {currentId && note
                 ? `Last updated ${new Date(note.updatedAt).toLocaleString()}`
@@ -373,38 +362,17 @@ export default function EditorPage() {
           </CardFooter>
         </Card>
       )}
-
-      {/* Link popup */}
-      {showLinkPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white dark:bg-gray-900 p-4 rounded-md shadow-lg w-[300px] space-y-3">
-            <h3 className="font-semibold text-lg text-foreground">Insert Link</h3>
-            <input
-              type="url"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="https://example.com"
-              className="w-full border p-2 rounded bg-background text-foreground"
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setShowLinkPopup(false)}>Cancel</Button>
-              <Button onClick={applyLink}>Apply</Button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   )
 }
 
-// helper components & utils
 function ToolbarButton({ onAction, children }: { onAction: () => void; children: React.ReactNode }) {
   return (
     <Button
       type="button"
       variant="outline"
       size="sm"
-      className="bg-background text-foreground"
+      className="bg-transparent hover:bg-primary/10 text-foreground rounded-md transition"
       onMouseDown={(e) => {
         e.preventDefault()
         onAction()
