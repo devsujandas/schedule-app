@@ -27,6 +27,13 @@ interface WakeLockSentinel extends EventTarget {
   type: "screen"
 }
 
+// Custom type to include experimental screen lock features
+interface ScreenOrientationWithLock extends ScreenOrientation {
+  lock(orientation: "landscape"): Promise<void>;
+  unlock(): void;
+}
+
+
 // --- New, Stylish Time Scroller Component ---
 const StylishTimeScroller = ({
   value,
@@ -35,7 +42,7 @@ const StylishTimeScroller = ({
   range,
 } : {
   value: number;
-  onValueChane: (val: number) => void;
+  onValueChange: (val: number) => void;
   unit: string;
   range: number[];
 }) => {
@@ -65,13 +72,18 @@ const StylishTimeScroller = ({
       },
       onTouchStart: (e: React.TouchEvent) => {
         touchStartY.current = e.touches[0].clientY;
+        document.body.style.overflow = 'hidden'; // Lock page scroll on touch
       },
       onTouchMove: (e: React.TouchEvent) => {
+        e.preventDefault(); // Prevent page scroll during touch move
         const delta = touchStartY.current - e.touches[0].clientY;
         if (Math.abs(delta) > 10) { // Threshold to start scrolling
            handleDelta(delta);
            touchStartY.current = e.touches[0].clientY;
         }
+      },
+      onTouchEnd: () => {
+        document.body.style.overflow = ''; // Unlock page scroll
       },
   };
   
@@ -294,18 +306,19 @@ export default function ToolsPage() {
 
   const toggleFullscreen = async () => {
     try {
+        const orientation = window.screen?.orientation as ScreenOrientationWithLock | undefined;
         if (!document.fullscreenElement) {
             await fullscreenRef.current?.requestFullscreen();
-            if (window.screen?.orientation?.lock && window.innerWidth < 1024) {
+            if (orientation?.lock && window.innerWidth < 1024) {
                 try {
-                    await screen.orientation.lock('landscape');
+                    await orientation.lock('landscape');
                 } catch (e) {
                     console.warn("Could not lock screen orientation:", e);
                 }
             }
         } else {
-            if (window.screen?.orientation?.unlock) {
-                screen.orientation.unlock();
+            if (orientation?.unlock) {
+                orientation.unlock();
             }
             await document.exitFullscreen();
         }
