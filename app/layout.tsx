@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -56,6 +57,11 @@ export default function RootLayout({
       <head>
         {/* Manifest */}
         <link rel="manifest" href="/site.webmanifest" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@400;600&family=Roboto:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+        
 
         {/* Favicon + App Icons */}
         <link rel="icon" href="/favicon.ico" />
@@ -64,6 +70,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
+        
 
         {/* Mobile Web App Meta */}
         <meta name="mobile-web-app-capable" content="yes" />

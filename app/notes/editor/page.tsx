@@ -16,12 +16,23 @@ import {
   Redo,
   Minus,
   CheckSquare,
+  Maximize2,
+  Minimize2,
 } from "lucide-react"
 import { useNotesStore } from "@/lib/notesStore"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useTheme } from "next-themes"
+
+// ✅ Google Fonts
+if (typeof document !== "undefined") {
+  const fontLink = document.createElement("link")
+  fontLink.href =
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@400;600&family=Roboto:wght@400;700&display=swap"
+  fontLink.rel = "stylesheet"
+  document.head.appendChild(fontLink)
+}
 
 type Cmd =
   | "bold"
@@ -60,6 +71,7 @@ export default function EditorPage() {
   const [fontFamily, setFontFamily] = useState("Arial")
   const [fontSize, setFontSize] = useState("16px")
   const [copied, setCopied] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Load note content
   useEffect(() => {
@@ -122,12 +134,19 @@ export default function EditorPage() {
     saveSelection()
   }
 
-  // Font controls
+  // ✅ Fixed Font controls
   const changeFontFamily = (family: string) => {
     setFontFamily(family)
     ensureFocus()
     restoreSelection()
-    document.execCommand("fontName", false, family)
+
+    let fallback = "sans-serif"
+    if (family === "Courier New" || family === "Monospace") fallback = "monospace"
+    if (family === "Times New Roman" || family === "Georgia") fallback = "serif"
+    if (family === "Comic Sans MS") fallback = "cursive"
+    if (family === "Verdana") fallback = "sans-serif"
+
+    document.execCommand("fontName", false, `'${family}', ${fallback}`)
     saveSelection()
   }
 
@@ -209,40 +228,44 @@ export default function EditorPage() {
     return () => clearInterval(interval)
   }, [title, contentHtmlState, hasHydrated])
 
+  // Delete note
   const onDelete = () => {
     if (currentId) deleteNote(currentId)
     router.push("/notes")
   }
 
-  // ✅ Safe Copy Handler
+  // Copy handler
   const handleCopy = async () => {
     const text = stripHtml(editorRef.current?.innerHTML || "")
     if (!text) return
 
     try {
-      if (navigator?.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text)
-      } else {
-        const textArea = document.createElement("textarea")
-        textArea.value = text
-        textArea.style.position = "fixed"
-        textArea.style.opacity = "0"
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-        document.execCommand("copy")
-        document.body.removeChild(textArea)
-      }
+      await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 1200)
-    } catch (e) {
-      console.error("Copy failed:", e)
+    } catch {
       alert("Copy failed. Please try again.")
     }
   }
 
+  // Fullscreen toggle
+  const toggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev)
+    const el = editorRef.current?.parentElement?.parentElement
+    if (!el) return
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.()
+    } else {
+      document.exitFullscreen?.()
+    }
+  }
+
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8 transition-colors duration-300">
+    <main
+      className={`mx-auto w-full max-w-4xl px-4 py-8 transition-colors duration-300 ${
+        isFullscreen ? "max-w-none h-screen" : ""
+      }`}
+    >
       <header className="mb-6 flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">{id ? "Edit your note" : "Create a new note"}</p>
         <Button variant="secondary" asChild>
@@ -254,7 +277,7 @@ export default function EditorPage() {
         <div className="text-muted-foreground">Loading editor…</div>
       ) : (
         <Card className="shadow-xl border rounded-2xl overflow-hidden bg-transparent">
-          <CardHeader className="p-4 border-b">
+          <CardHeader className="p-4 border-b flex justify-between items-center">
             <CardTitle>
               <Input
                 value={title}
@@ -263,6 +286,9 @@ export default function EditorPage() {
                 className="bg-transparent text-lg font-semibold"
               />
             </CardTitle>
+            <Button size="icon" variant="outline" onClick={toggleFullscreen}>
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
           </CardHeader>
 
           {/* Toolbar */}
@@ -285,7 +311,7 @@ export default function EditorPage() {
               <select
                 value={fontFamily}
                 onChange={(e) => changeFontFamily(e.target.value)}
-                className="rounded border bg-transparent p-1 text-sm"
+                className="rounded border p-1 text-sm bg-white text-black dark:bg-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option>Arial</option>
                 <option>Georgia</option>
@@ -293,19 +319,26 @@ export default function EditorPage() {
                 <option>Courier New</option>
                 <option>Verdana</option>
                 <option>Monospace</option>
+                <option>Roboto</option>
+                <option>Poppins</option>
+                <option>Inter</option>
+                <option>Comic Sans MS</option>
               </select>
 
               <select
                 value={fontSize}
                 onChange={(e) => changeFontSize(e.target.value)}
-                className="rounded border bg-transparent p-1 text-sm"
+                className="rounded border p-1 text-sm bg-white text-black dark:bg-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
+                <option value="10px">10px</option>
                 <option value="12px">12px</option>
                 <option value="14px">14px</option>
                 <option value="16px">16px</option>
                 <option value="18px">18px</option>
                 <option value="20px">20px</option>
                 <option value="24px">24px</option>
+                <option value="28px">28px</option>
+                <option value="32px">32px</option>
               </select>
             </div>
           </div>
