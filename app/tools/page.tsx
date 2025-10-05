@@ -27,6 +27,79 @@ interface WakeLockSentinel extends EventTarget {
   type: "screen"
 }
 
+// --- Time Scroller Component ---
+const TimeScroller = ({
+  values,
+  selectedValue,
+  onSelect,
+  unit,
+}: {
+  values: number[]
+  selectedValue: number
+  onSelect: (value: number) => void
+  unit: string
+}) => {
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const itemHeight = 64 // Each item is 64px tall (h-16)
+  const isInteracting = useRef(false)
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  // Scroll to the selected value when it changes externally
+  useEffect(() => {
+    if (scrollerRef.current && !isInteracting.current) {
+      const index = values.indexOf(selectedValue)
+      if (index !== -1) {
+        scrollerRef.current.scrollTop = index * itemHeight
+      }
+    }
+  }, [selectedValue, values])
+
+  const handleScroll = () => {
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current)
+    }
+    isInteracting.current = true
+
+    scrollTimeout.current = setTimeout(() => {
+      if (scrollerRef.current) {
+        const scrollTop = scrollerRef.current.scrollTop
+        const selectedIndex = Math.round(scrollTop / itemHeight)
+        const snappedScrollTop = selectedIndex * itemHeight
+        
+        // Smoothly snap to the nearest item
+        scrollerRef.current.scrollTo({ top: snappedScrollTop, behavior: 'smooth' })
+        
+        onSelect(values[selectedIndex])
+        isInteracting.current = false
+      }
+    }, 150) // Adjust timeout for snapping delay
+  }
+
+  return (
+    <div className="flex flex-col items-center">
+      <div
+        ref={scrollerRef}
+        onScroll={handleScroll}
+        className="h-48 overflow-y-scroll snap-y snap-mandatory scrollbar-hide relative"
+        style={{ scrollPaddingTop: `${itemHeight}px`}}
+      >
+        <div className="h-16" /> {/* Padding for top */}
+        {values.map((value) => (
+          <div
+            key={value}
+            className="h-16 w-28 flex items-center justify-center text-5xl font-mono snap-center transition-opacity duration-200"
+          >
+            {value.toString().padStart(2, '0')}
+          </div>
+        ))}
+        <div className="h-16" /> {/* Padding for bottom */}
+      </div>
+      <span className="text-sm font-light text-muted-foreground tracking-widest mt-1">{unit}</span>
+    </div>
+  )
+}
+
+
 export default function ToolsPage() {
   const [activeView, setActiveView] = useState<ToolView>("clock")
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -249,20 +322,58 @@ export default function ToolsPage() {
   const handleTimerStart = () => startTimerWithDuration(timerHours * 3600000 + timerMinutes * 60000 + timerSeconds * 1000)
   const handleTimerPause = () => { setIsTimerRunning(false); workerRef.current?.postMessage({ command: "pause-timer" }); releaseWakeLock() }
   const handleTimerReset = () => { stopNotificationSound(); setIsTimerRunning(false); setTimerRemaining(0); workerRef.current?.postMessage({ command: "reset-timer" }); releaseWakeLock() }
-  const handlePresetTimerClick = (minutes: number) => { setTimerHours(0); setTimerMinutes(minutes); setTimerSeconds(0); startTimerWithDuration(minutes * 60000) }
+  const handlePresetTimerClick = (minutes: number) => { 
+    setTimerHours(0); 
+    setTimerMinutes(minutes); 
+    setTimerSeconds(0); 
+    startTimerWithDuration(minutes * 60000);
+  }
   const handleStopAlarm = () => { stopNotificationSound(); handleTimerReset(); }
+  
+  const hours = Array.from({ length: 24 }, (_, i) => i)
+  const minutesAndSeconds = Array.from({ length: 60 }, (_, i) => i)
 
   return (
     <div className="min-h-screen bg-background">
       <style>{`
-        /* Hide arrow buttons from number input */
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
-        input[type=number] {
-          -moz-appearance: textfield; /* Firefox */
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .time-scroller-container {
+          position: relative;
+        }
+        .time-scroller-container::before, .time-scroller-container::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 64px; /* Same as item height */
+          z-index: 1;
+          pointer-events: none;
+        }
+        .time-scroller-container::before {
+          top: 0;
+          background: linear-gradient(to bottom, hsl(var(--card)), transparent);
+        }
+        .time-scroller-container::after {
+          bottom: 0;
+          background: linear-gradient(to top, hsl(var(--card)), transparent);
+        }
+        .time-scroller-highlight {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: calc(100% - 16px);
+          height: 64px; /* Same as item height */
+          border-top: 2px solid hsl(var(--primary));
+          border-bottom: 2px solid hsl(var(--primary));
+          pointer-events: none;
+          z-index: 2;
         }
       `}</style>
       {!isFullscreen && (<>
@@ -335,17 +446,19 @@ export default function ToolsPage() {
                     </div>
                    ) : (
                      <div className="w-full flex flex-col items-center justify-center space-y-6 sm:space-y-10">
-                        <h2 className="text-2xl sm:text-3xl font-light text-muted-foreground tracking-wider">Set Duration</h2>
-                        <div className="flex items-center justify-center gap-2 sm:gap-6 text-5xl sm:text-7xl font-mono text-foreground">
-                            <div className="flex flex-col items-center"><input type="number" value={timerHours.toString().padStart(2, '0')} onChange={(e) => setTimerHours(Math.max(0, Math.min(23, Number.parseInt(e.target.value) || 0)))} className="bg-transparent border-none text-center w-20 sm:w-28 focus:outline-none"/> <span className="text-xs sm:text-sm font-light text-muted-foreground tracking-widest mt-1">HOURS</span></div>
-                            <span className="text-muted-foreground">:</span>
-                            <div className="flex flex-col items-center"><input type="number" value={timerMinutes.toString().padStart(2, '0')} onChange={(e) => setTimerMinutes(Math.max(0, Math.min(59, Number.parseInt(e.target.value) || 0)))} className="bg-transparent border-none text-center w-20 sm:w-28 focus:outline-none"/> <span className="text-xs sm:text-sm font-light text-muted-foreground tracking-widest mt-1">MINUTES</span></div>
-                            <span className="text-muted-foreground">:</span>
-                            <div className="flex flex-col items-center"><input type="number" value={timerSeconds.toString().padStart(2, '0')} onChange={(e) => setTimerSeconds(Math.max(0, Math.min(59, Number.parseInt(e.target.value) || 0)))} className="bg-transparent border-none text-center w-20 sm:w-28 focus:outline-none"/> <span className="text-xs sm:text-sm font-light text-muted-foreground tracking-widest mt-1">SECONDS</span></div>
+                        <div className="relative flex items-center justify-center gap-2 sm:gap-4 time-scroller-container">
+                          <TimeScroller values={hours} selectedValue={timerHours} onSelect={setTimerHours} unit="HOURS" />
+                          <span className="text-5xl font-mono text-muted-foreground pb-8">:</span>
+                          <TimeScroller values={minutesAndSeconds} selectedValue={timerMinutes} onSelect={setTimerMinutes} unit="MINUTES" />
+                          <span className="text-5xl font-mono text-muted-foreground pb-8">:</span>
+                          <TimeScroller values={minutesAndSeconds} selectedValue={timerSeconds} onSelect={setTimerSeconds} unit="SECONDS" />
+                          <div className="time-scroller-highlight" />
                         </div>
+
                         <div className="flex flex-wrap items-center justify-center gap-3">
-                           {[5, 10, 15, 30, 45, 60].map((min) => (<Button key={min} variant="outline" className="rounded-full px-4 py-4 text-sm sm:px-5 sm:py-5 sm:text-base" onClick={() => handlePresetTimerClick(min)}>{min} min</Button>))}
+                           {[5, 10, 15, 30, 45, 60].map((min) => (<Button key={min} variant="outline" className="rounded-full px-4 py-2 text-sm sm:px-5 sm:py-2.5 sm:text-base hover:bg-primary/10 hover:border-primary/50 transition-colors" onClick={() => handlePresetTimerClick(min)}>{min} min</Button>))}
                         </div>
+
                         <div className="w-full pt-4">
                            <Button size="lg" onClick={handleTimerStart} disabled={timerHours === 0 && timerMinutes === 0 && timerSeconds === 0} className="w-full max-w-xs mx-auto h-12 sm:h-14 text-lg sm:text-xl rounded-full"><Play className="w-5 h-5 sm:w-6 sm:h-6 mr-2" /> Start</Button>
                         </div>
