@@ -15,6 +15,7 @@ import {
   Maximize,
   Minimize,
   BellOff,
+  Flag,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -151,6 +152,7 @@ export default function ToolsPage() {
   // State for Stopwatch
   const [stopwatchTime, setStopwatchTime] = useState(0)
   const [isStopwatchRunning, setIsStopwatchRunning] = useState(false)
+  const [laps, setLaps] = useState<number[]>([])
 
   // State for Timer
   const [timerHours, setTimerHours] = useState(0)
@@ -306,8 +308,20 @@ export default function ToolsPage() {
     if (newIsRunning) { workerRef.current?.postMessage({ command: "start-stopwatch" }); requestWakeLock() } 
     else { workerRef.current?.postMessage({ command: "pause-stopwatch" }); releaseWakeLock() }
   }
+  
+  const handleStopwatchLap = () => {
+    if(isStopwatchRunning) {
+      setLaps(prevLaps => [...prevLaps, stopwatchTime]);
+    }
+  }
 
-  const handleStopwatchReset = () => { setIsStopwatchRunning(false); setStopwatchTime(0); workerRef.current?.postMessage({ command: "reset-stopwatch" }); releaseWakeLock() }
+  const handleStopwatchReset = () => { 
+    setIsStopwatchRunning(false); 
+    setStopwatchTime(0); 
+    setLaps([]);
+    workerRef.current?.postMessage({ command: "reset-stopwatch" }); 
+    releaseWakeLock() 
+  }
   
   const startTimerWithDuration = (duration: number) => {
     if (duration <= 0) return
@@ -370,8 +384,9 @@ export default function ToolsPage() {
           transform: translate(-50%, -50%);
           width: calc(100% - 16px);
           height: 64px; /* Same as item height */
-          border-top: 2px solid hsl(var(--primary));
-          border-bottom: 2px solid hsl(var(--primary));
+          border: 2px solid hsl(var(--primary) / 0.5);
+          border-radius: 12px;
+          background-color: hsl(var(--primary) / 0.05);
           pointer-events: none;
           z-index: 2;
         }
@@ -413,13 +428,34 @@ export default function ToolsPage() {
           )}
           {activeView === "stopwatch" && (
             <motion.div key="stopwatch" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className={`flex items-center justify-center ${ isFullscreen ? "h-screen" : "min-h-[60vh]"}`}>
-               <Card className={`${ isFullscreen ? "border-0 shadow-none bg-background w-full h-full flex items-center justify-center" : "p-8 sm:p-12 lg:p-16 w-full max-w-2xl"}`}><div className="text-center space-y-8 relative w-full">
-                  <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4">{isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}</Button>
+               <Card className={`${ isFullscreen ? "border-0 shadow-none bg-background w-full h-full flex flex-col items-center justify-center" : "p-8 sm:p-12 lg:p-16 w-full max-w-2xl"}`}><div className="text-center space-y-8 relative w-full">
+                  <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="absolute top-0 right-0 sm:top-2 sm:right-2">{isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}</Button>
                   <div className={`font-bold font-mono tracking-tight ${ isFullscreen ? "text-8xl sm:text-9xl lg:text-[12rem]" : "text-6xl sm:text-7xl lg:text-8xl"}`}>{formatStopwatchTime(stopwatchTime)}</div>
                   <div className="flex items-center justify-center gap-4">
-                     <Button size="lg" onClick={handleStopwatchToggle} className="gap-2 px-8">{isStopwatchRunning ? ( <> <Pause className="w-5 h-5" /> Pause </> ) : ( <> <Play className="w-5 h-5" /> Start </>)}</Button>
                      <Button size="lg" variant="outline" onClick={handleStopwatchReset} className="gap-2 px-8 bg-transparent"><RotateCcw className="w-5 h-5" /> Reset</Button>
+                     <Button size="lg" onClick={handleStopwatchToggle} className="gap-2 px-8">{isStopwatchRunning ? ( <> <Pause className="w-5 h-5" /> Pause </> ) : ( <> <Play className="w-5 h-5" /> Start </>)}</Button>
+                     <Button size="lg" variant="outline" onClick={handleStopwatchLap} disabled={!isStopwatchRunning && laps.length === 0} className="gap-2 px-8 bg-transparent"><Flag className="w-5 h-5" /> Lap</Button>
                   </div>
+                  <AnimatePresence>
+                    {laps.length > 0 && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="w-full max-w-sm mx-auto pt-4">
+                        <div className="h-48 overflow-y-auto rounded-lg border bg-card/50 p-2 scrollbar-hide text-left">
+                          {[...laps].reverse().map((lap, index) => {
+                            const reversedIndex = laps.length - 1 - index;
+                            const previousLapTime = reversedIndex > 0 ? laps[reversedIndex - 1] : 0;
+                            const lapDuration = lap - previousLapTime;
+                            return (
+                              <motion.div key={reversedIndex} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }} className="flex justify-between items-center p-2.5 font-mono text-base border-b last:border-b-0">
+                                <span className="text-muted-foreground">Lap {reversedIndex + 1}</span>
+                                <span className="font-medium">+{formatStopwatchTime(lapDuration)}</span>
+                                <span className="text-foreground/80">{formatStopwatchTime(lap)}</span>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                </div></Card>
             </motion.div>
           )}
