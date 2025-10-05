@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import {
   Clock,
   Timer,
@@ -28,77 +27,89 @@ interface WakeLockSentinel extends EventTarget {
   type: "screen"
 }
 
-// --- Time Scroller Component ---
-const TimeScroller = ({
-  values,
-  selectedValue,
-  onSelect,
+// --- New, Stylish Time Scroller Component ---
+const StylishTimeScroller = ({
+  value,
+  onValueChange,
   unit,
-}: {
-  values: number[]
-  selectedValue: number
-  onSelect: (value: number) => void
-  unit: string
+  range,
+} : {
+  value: number;
+  onValueChane: (val: number) => void;
+  unit: string;
+  range: number[];
 }) => {
-  const scrollerRef = useRef<HTMLDivElement>(null)
-  const itemHeight = 64 // Each item is 64px tall (h-16)
-  const isInteracting = useRef(false)
-  const scrollTimeout = useRef<NodeJS.Timeout | null>(null)
+  const touchStartY = useRef(0);
+  const lastScrollTime = useRef(0);
 
-  // Scroll to the selected value when it changes externally
-  useEffect(() => {
-    if (scrollerRef.current && !isInteracting.current) {
-      const index = values.indexOf(selectedValue)
-      if (index !== -1) {
-        scrollerRef.current.scrollTop = index * itemHeight
-      }
+  const handleDelta = (delta: number) => {
+    const now = Date.now();
+    if (now - lastScrollTime.current < 50) return; // throttle
+    lastScrollTime.current = now;
+
+    const currentIndex = range.indexOf(value);
+    let nextIndex;
+
+    if (delta < 0) { // Scrolling Up
+      nextIndex = (currentIndex + 1) % range.length;
+    } else { // Scrolling Down
+      nextIndex = (currentIndex - 1 + range.length) % range.length;
     }
-  }, [selectedValue, values])
+    onValueChange(range[nextIndex]);
+  };
+  
+  const eventHandlers = {
+      onWheel: (e: React.WheelEvent) => {
+        e.preventDefault();
+        handleDelta(e.deltaY);
+      },
+      onTouchStart: (e: React.TouchEvent) => {
+        touchStartY.current = e.touches[0].clientY;
+      },
+      onTouchMove: (e: React.TouchEvent) => {
+        const delta = touchStartY.current - e.touches[0].clientY;
+        if (Math.abs(delta) > 10) { // Threshold to start scrolling
+           handleDelta(delta);
+           touchStartY.current = e.touches[0].clientY;
+        }
+      },
+  };
+  
+  const getDisplayValues = () => {
+      const currentIndex = range.indexOf(value);
+      const prevIndex = (currentIndex - 1 + range.length) % range.length;
+      const nextIndex = (currentIndex + 1) % range.length;
+      return {
+          prev: range[prevIndex],
+          current: value,
+          next: range[nextIndex],
+      };
+  };
 
-  const handleScroll = () => {
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current)
-    }
-    isInteracting.current = true
-
-    scrollTimeout.current = setTimeout(() => {
-      if (scrollerRef.current) {
-        const scrollTop = scrollerRef.current.scrollTop
-        const selectedIndex = Math.round(scrollTop / itemHeight)
-        const snappedScrollTop = selectedIndex * itemHeight
-        
-        // Smoothly snap to the nearest item
-        scrollerRef.current.scrollTo({ top: snappedScrollTop, behavior: 'smooth' })
-        
-        onSelect(values[selectedIndex])
-        isInteracting.current = false
-      }
-    }, 150) // Adjust timeout for snapping delay
-  }
+  const { prev, current, next } = getDisplayValues();
 
   return (
-    <div className="flex flex-col items-center">
-      <div
-        ref={scrollerRef}
-        onScroll={handleScroll}
-        className="h-48 overflow-y-scroll snap-y snap-mandatory scrollbar-hide relative"
-        style={{ scrollPaddingTop: `${itemHeight}px`}}
-      >
-        <div className="h-16" /> {/* Padding for top */}
-        {values.map((value) => (
-          <div
-            key={value}
-            className="h-16 w-28 flex items-center justify-center text-5xl font-mono snap-center transition-opacity duration-200"
-          >
-            {value.toString().padStart(2, '0')}
-          </div>
-        ))}
-        <div className="h-16" /> {/* Padding for bottom */}
-      </div>
-      <span className="text-sm font-light text-muted-foreground tracking-widest mt-1">{unit}</span>
+    <div className="flex flex-col items-center text-center select-none" {...eventHandlers}>
+        <span className="text-2xl text-muted-foreground/30 h-8">
+            {String(prev).padStart(2, '0')}
+        </span>
+        <motion.div
+            key={current}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="text-6xl font-bold text-foreground h-16"
+        >
+            {String(current).padStart(2, '0')}
+        </motion.div>
+        <span className="text-2xl text-muted-foreground/30 h-8">
+            {String(next).padStart(2, '0')}
+        </span>
+        <span className="text-sm font-light text-muted-foreground tracking-widest mt-2">{unit}</span>
     </div>
-  )
-}
+  );
+};
 
 
 export default function ToolsPage() {
@@ -206,14 +217,16 @@ export default function ToolsPage() {
     alarmSoundNodesRef.current = { oscillator, gainNode, intervalId }
     setIsAlarmPlaying(true)
 
+    // Alarm duration extended to 60 seconds
     setTimeout(() => {
       stopNotificationSound()
-    }, 30000) // Auto-stop after 30 seconds
+    }, 60000)
   }
 
 
   const showTimerEndNotification = () => {
-    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200, 100, 200])
+    // Enhanced vibration pattern
+    if ("vibrate" in navigator) navigator.vibrate([500, 100, 500, 100, 500, 300, 200, 100, 200, 100, 200])
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification("Timer Finished!", {
         body: "Your timer has ended.",
@@ -357,39 +370,6 @@ export default function ToolsPage() {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
-        .time-scroller-container {
-          position: relative;
-        }
-        .time-scroller-container::before, .time-scroller-container::after {
-          content: '';
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 64px; /* Same as item height */
-          z-index: 1;
-          pointer-events: none;
-        }
-        .time-scroller-container::before {
-          top: 0;
-          background: linear-gradient(to bottom, hsl(var(--card)), transparent);
-        }
-        .time-scroller-container::after {
-          bottom: 0;
-          background: linear-gradient(to top, hsl(var(--card)), transparent);
-        }
-        .time-scroller-highlight {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: calc(100% - 16px);
-          height: 64px; /* Same as item height */
-          border: 2px solid hsl(var(--primary) / 0.5);
-          border-radius: 12px;
-          background-color: hsl(var(--primary) / 0.05);
-          pointer-events: none;
-          z-index: 2;
-        }
       `}</style>
       {!isFullscreen && (<>
           <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -482,13 +462,10 @@ export default function ToolsPage() {
                     </div>
                    ) : (
                      <div className="w-full flex flex-col items-center justify-center space-y-6 sm:space-y-10">
-                        <div className="relative flex items-center justify-center gap-2 sm:gap-4 time-scroller-container">
-                          <TimeScroller values={hours} selectedValue={timerHours} onSelect={setTimerHours} unit="HOURS" />
-                          <span className="text-5xl font-mono text-muted-foreground pb-8">:</span>
-                          <TimeScroller values={minutesAndSeconds} selectedValue={timerMinutes} onSelect={setTimerMinutes} unit="MINUTES" />
-                          <span className="text-5xl font-mono text-muted-foreground pb-8">:</span>
-                          <TimeScroller values={minutesAndSeconds} selectedValue={timerSeconds} onSelect={setTimerSeconds} unit="SECONDS" />
-                          <div className="time-scroller-highlight" />
+                        <div className="flex items-center justify-center gap-4 sm:gap-8 cursor-grab active:cursor-grabbing">
+                          <StylishTimeScroller value={timerHours} onValueChange={setTimerHours} unit="HOURS" range={hours} />
+                          <StylishTimeScroller value={timerMinutes} onValueChange={setTimerMinutes} unit="MINUTES" range={minutesAndSeconds} />
+                          <StylishTimeScroller value={timerSeconds} onValueChange={setTimerSeconds} unit="SECONDS" range={minutesAndSeconds} />
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center gap-3">
