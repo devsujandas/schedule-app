@@ -7,7 +7,7 @@ import { TasksView } from "@/components/tasks-view"
 import { SettingsView } from "@/components/settings-view"
 import { DayTimelineView } from "@/components/day-timeline-view"
 import { Button } from "@/components/ui/button"
-import { Calendar, BarChart3, CheckSquare, Settings, Clock, Timer } from "lucide-react"
+import { Calendar, BarChart3, CheckSquare, Settings, Timer, NotebookPenIcon } from "lucide-react"
 import Link from "next/link"
 
 export default function Home() {
@@ -21,48 +21,56 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
+      {/* HEADER */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex items-center justify-between h-14  sm:h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            {/* Left side: Logo + Title */}
             <div className="flex items-center gap-1 sm:gap-1">
-<div className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center flex-shrink-0">
-  <img
-  src="/Schedulaar.png"
-  alt="Logo"
-className="w-full h-full object-contain"
-/>
+              <div className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center flex-shrink-0">
+                <img
+                  src="/Schedulaar.png"
+                  alt="Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-playfair text-foreground">
+                Schedulaar
+              </h1>
+            </div>
 
-  </div>
-  <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-playfair text-foreground">
-  Schedulaar
-</h1>
+            {/* Right side: Notes Icon + Time */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Link href="/notes">
+                <NotebookPenIcon
+                  size={20}
+                  className="text-foreground hover:text-primary transition-colors cursor-pointer"
+                />
+              </Link>
 
-</div>
-
-
-           <div className="flex items-center gap-2 sm:gap-4">
-  <div className="text-right">
-    <div className="text-xs sm:text-sm font-medium">
-      {currentTime.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      })}
-    </div>
-    <div className="text-[10px] sm:text-xs text-muted-foreground">
-      {currentTime.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit", 
-      })}
-    </div>
-  </div>
-</div>
-
+              {/* Time */}
+              <div className="text-right">
+                <div className="text-xs sm:text-sm font-medium">
+                  {currentTime.toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">
+                  {currentTime.toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
+      {/* DESKTOP NAV */}
       <nav className="border-b border-border bg-card/30 sticky top-14 sm:top-16 z-40 hidden md:block">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex gap-1 py-2 overflow-x-auto scrollbar-hide">
@@ -75,6 +83,7 @@ className="w-full h-full object-contain"
               <Calendar className="w-4 h-4" />
               <span className="text-xs sm:text-sm">Schedule</span>
             </Button>
+
             <Button
               variant={activeView === "tasks" ? "default" : "ghost"}
               size="sm"
@@ -84,6 +93,7 @@ className="w-full h-full object-contain"
               <CheckSquare className="w-4 h-4" />
               <span className="text-xs sm:text-sm">Tasks</span>
             </Button>
+
             <Button
               variant={activeView === "stats" ? "default" : "ghost"}
               size="sm"
@@ -93,12 +103,22 @@ className="w-full h-full object-contain"
               <BarChart3 className="w-4 h-4" />
               <span className="text-xs sm:text-sm">Analytics</span>
             </Button>
+
             <Link href="/tools">
               <Button variant="ghost" size="sm" className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4">
                 <Timer className="w-4 h-4" />
                 <span className="text-xs sm:text-sm">Tools</span>
               </Button>
             </Link>
+
+            {/* ✅ Notes button in navbar */}
+            <Link href="/notes">
+              <Button variant="ghost" size="sm" className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4">
+                <NotebookPenIcon className="w-4 h-4" />
+                <span className="text-xs sm:text-sm">Notes</span>
+              </Button>
+            </Link>
+
             <Button
               variant={activeView === "settings" ? "default" : "ghost"}
               size="sm"
@@ -112,6 +132,7 @@ className="w-full h-full object-contain"
         </div>
       </nav>
 
+      {/* MAIN VIEW */}
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {activeView === "schedule" && (
           <div className="space-y-4 sm:space-y-6">
@@ -124,6 +145,7 @@ className="w-full h-full object-contain"
         {activeView === "settings" && <SettingsView />}
       </main>
 
+      {/* MOBILE NAV */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-card/95 backdrop-blur-lg shadow-lg">
         <div className="flex items-center justify-around px-2 py-2 safe-area-inset-bottom">
           <button
@@ -161,6 +183,14 @@ className="w-full h-full object-contain"
             <BarChart3 className="w-5 h-5" />
             <span className="text-[10px] font-medium">Analytics</span>
           </button>
+
+          {/* ✅ New Notes button (mobile navbar) */}
+          <Link href="/notes">
+            <button className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-accent">
+              <NotebookPenIcon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">Notes</span>
+            </button>
+          </Link>
 
           <Link href="/tools">
             <button className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-accent">
