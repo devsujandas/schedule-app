@@ -353,7 +353,7 @@ export function ScheduleView() {
                     <div className="flex flex-col items-end gap-1 ml-2">
                       {active && <Badge className="bg-foreground text-background text-xs font-semibold">LIVE</Badge>}
                       {isNext && !active && (
-                        <Badge variant="secondary" className="text-xs font-semibold bg-sky-600">
+                        <Badge variant="secondary" className="text-xs font-semibold">
                           UP NEXT
                         </Badge>
                       )}

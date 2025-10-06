@@ -12,7 +12,7 @@ import Link from "next/link"
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"schedule" | "stats" | "tasks" | "settings">("schedule")
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const [currentTime, setCurrentTime] = useState<Date>(new Date())
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
@@ -39,14 +39,8 @@ export default function Home() {
               </h1>
             </div>
 
-            {/* Right side: Notes Icon + Time */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              <Link href="/notes">
-                <NotebookPenIcon
-                  size={20}
-                  className="text-foreground hover:text-primary transition-colors cursor-pointer"
-                />
-              </Link>
+
+            
 
               {/* Time */}
               <div className="text-right">
@@ -57,14 +51,13 @@ export default function Home() {
                     day: "numeric",
                   })}
                 </div>
-                <div className="text-[10px] sm:text-xs text-muted-foreground">
-                  {currentTime.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
+                <div className="flex items-center justify-end gap-1 text-[10px] sm:text-xs text-muted-foreground">
+                <Timer className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                {currentTime.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                 minute: "2-digit",
                   })}
-                </div>
-              </div>
+             </div>
             </div>
           </div>
         </div>

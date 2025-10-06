@@ -266,7 +266,7 @@ export function SettingsView() {
     <p>Your schedule — organized, private, and always ready.</p>
     <p>Current schedule items: {scheduleItems.length}</p>
     <p>
-      Schedulaar App v2.7{" "}
+      Schedulaar App v2.8{" "}
       <span className="inline-block bg-yellow-200 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full align-middle ml-2">
         Beta
       </span>
