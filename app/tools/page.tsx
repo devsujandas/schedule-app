@@ -402,34 +402,79 @@ export default function ToolsPage() {
             </div>
           </header>
           {/* --- NAVBAR SECTION: MODIFIED FOR RESPONSIVENESS --- */}
-          <nav className="border-b border-border bg-card/30 sticky top-14 sm:top-16 z-40">
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-              <div className="grid grid-cols-4 gap-2 py-2 sm:flex sm:gap-1 sm:overflow-x-auto sm:scrollbar-hide">
-                <Button variant={activeView === "clock" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("clock")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto">
-                  <Clock className="w-4 h-4" /> Clock
-                </Button>
+         <nav className="border-b border-border bg-card/30 sticky top-14 sm:top-16 z-40">
+  <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+    <div className="grid grid-cols-4 gap-2 py-2 sm:flex sm:gap-1 sm:overflow-x-auto sm:scrollbar-hide">
 
-                <Button variant={activeView === "stopwatch" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("stopwatch")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto">
-                  <Stopwatch className="w-4 h-4" /> Stopwatch
-                </Button>
+      <Button
+        variant={activeView === "clock" ? "default" : "ghost"}
+        size="sm"
+        onClick={() => setActiveView("clock")}
+        className="
+          flex flex-col sm:flex-row items-center justify-center
+          gap-0.5 sm:gap-2
+          flex-shrink-0 h-16 sm:h-10
+          px-3 sm:px-4 w-full sm:w-auto
+          text-xs sm:text-sm
+        "
+      >
+        <Clock className="w-6 h-6 sm:w-4 sm:h-4" />
+        <span>Clock</span>
+      </Button>
 
-                <Button variant={activeView === "timer" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("timer")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto">
-                  <Timer className="w-4 h-4" /> Timer
-                </Button>
+      <Button
+        variant={activeView === "stopwatch" ? "default" : "ghost"}
+        size="sm"
+        onClick={() => setActiveView("stopwatch")}
+        className="
+          flex flex-col sm:flex-row items-center justify-center
+          gap-0.5 sm:gap-2
+          flex-shrink-0 h-16 sm:h-10
+          px-3 sm:px-4 w-full sm:w-auto
+          text-xs sm:text-sm
+        "
+      >
+        <Stopwatch className="w-6 h-6 sm:w-4 sm:h-4" />
+        <span>Stopwatch</span>
+      </Button>
 
-                {/* 🔹 নতুন Calculator বাটন */}
-                <a href="/tools/calculator">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto"
-                  >
-                    <Calculator className="w-4 h-4" /> Calculator
-                  </Button>
-                </a>
-              </div>
-            </div>
-          </nav>
+      <Button
+        variant={activeView === "timer" ? "default" : "ghost"}
+        size="sm"
+        onClick={() => setActiveView("timer")}
+        className="
+          flex flex-col sm:flex-row items-center justify-center
+          gap-0.5 sm:gap-2
+          flex-shrink-0 h-16 sm:h-10
+          px-3 sm:px-4 w-full sm:w-auto
+          text-xs sm:text-sm
+        "
+      >
+        <Timer className="w-6 h-6 sm:w-4 sm:h-4" />
+        <span>Timer</span>
+      </Button>
+
+      {/* Calculator Button */}
+      <a href="/tools/calculator">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="
+            flex flex-col sm:flex-row items-center justify-center
+            gap-0.5 sm:gap-2
+            flex-shrink-0 h-16 sm:h-10
+            px-3 sm:px-4 w-full sm:w-auto
+            text-xs sm:text-sm
+          "
+        >
+          <Calculator className="w-6 h-6 sm:w-4 sm:h-4" />
+          <span>Calculator</span>
+        </Button>
+      </a>
+    </div>
+  </div>
+</nav>
+
       </>)}
       <main ref={fullscreenRef} className={`${ isFullscreen ? "fixed inset-0 z-[100] bg-background" : "max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8"}`}>
         <AnimatePresence mode="wait">

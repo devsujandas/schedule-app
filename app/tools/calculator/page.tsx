@@ -264,18 +264,20 @@ export default function CalculatorPage() {
                 <div className="grid grid-cols-4 gap-2">
                   {buttons.map((btn) => (
                     <Button
-                      key={btn}
-                      onClick={() => handleClick(btn)}
-                      className={`h-12 text-lg rounded-lg ${
-                        btn === "="
-                          ? "col-span-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                          : btn === "Clear"
-                          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                      }`}
-                    >
-                      {btn}
-                    </Button>
+  key={btn}
+  onClick={() => handleClick(btn)}
+  className={`h-12 text-lg rounded-lg font-medium transition-all
+    ${
+      btn === "="
+        ? "col-span-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+        : btn === "Clear"
+        ? "bg-red-500/80 text-white hover:bg-red-600 dark:bg-red-600/80 dark:hover:bg-red-700"
+        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+    }`}
+>
+  {btn}
+</Button>
+
                   ))}
                 </div>
               </motion.div>
