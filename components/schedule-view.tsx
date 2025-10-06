@@ -152,7 +152,24 @@ export function ScheduleView() {
   })
 
   const nextItem = getNextItem()
-  const sortedItems = [...filteredItems].sort((a, b) => a.startHour - b.startHour)
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    const aIsActive = isActive(a)
+    const bIsActive = isActive(b)
+    const aIsNext = nextItem?.id === a.id
+    const bIsNext = nextItem?.id === b.id
+
+    // Active item comes first
+    if (aIsActive && !bIsActive) return -1
+    if (!aIsActive && bIsActive) return 1
+
+    // "Up Next" item comes second
+    if (aIsNext && !bIsNext) return -1
+    if (!aIsNext && bIsNext) return 1
+
+    // Fallback to sorting by start hour
+    return a.startHour - b.startHour
+  })
+
 
   const totalTasks = scheduleItems.reduce((acc, item) => acc + (item.tasks?.length || 0), 0)
   const completedTasks = scheduleItems.reduce(
@@ -515,130 +532,135 @@ export function ScheduleView() {
       )}
 
       {viewMode === "timeline" && (
-        <div className="space-y-2">
-          {sortedItems.map((item, index) => {
-            const Icon = iconMap[item.icon as keyof typeof iconMap] || BookOpen
-            const active = isActive(item)
-            const progress = getProgress(item)
-            const isNext = nextItem?.id === item.id
-            const isFocused = focusMode === item.id
-            const tasks = item.tasks || []
-            const completedTasks = tasks.filter((t) => t.completed).length
-            const category = item.category || "work"
-            const colors = categoryColors[category]
+  <div className="space-y-2">
+    {sortedItems.map((item, index) => {
+      const Icon = iconMap[item.icon as keyof typeof iconMap] || BookOpen
+      const active = isActive(item)
+      const progress = getProgress(item)
+      const isNext = nextItem?.id === item.id
+      const isFocused = focusMode === item.id
+      const tasks = item.tasks || []
+      const completedTasks = tasks.filter((t) => t.completed).length
+      const category = item.category || "work"
+      const colors = categoryColors[category]
 
-            return (
-              <Card
-                key={item.id}
-                className={cn(
-                  "transition-all duration-300 hover:shadow-md relative border-2",
-                  active && "ring-2 ring-foreground shadow-xl",
-                  isFocused && "ring-2 ring-foreground/50",
-                  colors.border,
+      return (
+        <Card
+          key={item.id}
+          className={cn(
+            "transition-all duration-300 hover:shadow-md relative border-2",
+            active && "ring-2 ring-foreground shadow-xl",
+            isFocused && "ring-2 ring-foreground/50",
+            colors.border,
+          )}
+        >
+          {active && <div className={cn("absolute top-0 left-0 right-0 h-1.5", colors.bg)} />}
+
+          <div className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {/* Time Column */}
+              <div className="flex-shrink-0 w-full sm:w-32 sm:text-right">
+                <div className="text-lg font-bold font-mono">{item.timeRange.split(" - ")[0]}</div>
+                <div className="text-xs text-muted-foreground font-medium">{getDuration(item)}</div>
+              </div>
+
+              {/* Timeline Indicator */}
+              <div className="flex-shrink-0 flex flex-col items-center">
+                <div
+                  className={cn(
+                    "w-14 h-14 rounded-xl flex items-center justify-center border-2 transition-all",
+                    active
+                      ? cn("bg-foreground text-background border-foreground shadow-lg")
+                      : cn("border-border", colors.bg),
+                  )}
+                >
+                  <Icon className={cn("w-7 h-7", active ? "" : colors.text)} />
+                </div>
+                {index < sortedItems.length - 1 && (
+                  <div className={cn("w-0.5 h-8 mt-2", active ? "bg-foreground" : "bg-border")} />
                 )}
-              >
-                {active && <div className={cn("absolute top-0 left-0 right-0 h-1.5", colors.bg)} />}
+              </div>
 
-                <div className="p-4">
-                  <div className="flex items-center gap-4">
-                    {/* Time Column */}
-                    <div className="flex-shrink-0 w-32 text-right">
-                      <div className="text-lg font-bold font-mono">{item.timeRange.split(" - ")[0]}</div>
-                      <div className="text-xs text-muted-foreground font-medium">{getDuration(item)}</div>
-                    </div>
-
-                    {/* Timeline Indicator */}
-                    <div className="flex-shrink-0 flex flex-col items-center">
-                      <div
-                        className={cn(
-                          "w-14 h-14 rounded-xl flex items-center justify-center border-2 transition-all",
-                          active
-                            ? cn("bg-foreground text-background border-foreground shadow-lg")
-                            : cn("border-border", colors.bg),
-                        )}
-                      >
-                        <Icon className={cn("w-7 h-7", active ? "" : colors.text)} />
-                      </div>
-                      {index < sortedItems.length - 1 && (
-                        <div className={cn("w-0.5 h-8 mt-2", active ? "bg-foreground" : "bg-border")} />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="text-xl font-bold font-serif">{item.title}</h3>
-                            {active && (
-                              <Badge className="bg-foreground text-background text-xs font-semibold">LIVE</Badge>
-                            )}
-                            {isNext && !active && (
-                              <Badge variant="secondary" className="text-xs font-semibold">
-                                UP NEXT
-                              </Badge>
-                            )}
-                            <Badge variant="outline" className={cn("text-xs capitalize", colors.text)}>
-                              {category}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <Button variant="ghost" size="sm" onClick={() => setFocusMode(isFocused ? null : item.id)}>
-                            {isFocused ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setEditingItem(item)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => deleteScheduleItem(item.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Progress */}
+              {/* Content */}
+              <div className="flex-1 min-w-0 w-full">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-2 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="text-xl font-bold font-serif">{item.title}</h3>
                       {active && (
-                        <div className="space-y-1 mb-3 p-3 bg-secondary/50 rounded-lg">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground font-semibold">{getTimeRemaining(item)}</span>
-                            <span className="font-bold text-base">{Math.round(progress)}%</span>
-                          </div>
-                          <Progress value={progress} className="h-2.5" />
-                        </div>
+                        <Badge className="bg-foreground text-background text-xs font-semibold">LIVE</Badge>
                       )}
-
-                      {/* Tasks and Notes */}
-                      <div className="flex items-center gap-4 text-sm">
-                        {tasks.length > 0 && (
-                          <div className="flex items-center gap-2">
-                            {completedTasks === tasks.length ? (
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                            ) : (
-                              <Circle className="w-4 h-4 text-muted-foreground" />
-                            )}
-                            <span className="text-muted-foreground font-medium">
-                              {completedTasks}/{tasks.length} tasks
-                            </span>
-                          </div>
-                        )}
-                        {item.notes && (
-                          <div className="flex items-center gap-2">
-                            <StickyNote className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground font-medium">Has notes</span>
-                          </div>
-                        )}
-                      </div>
+                      {isNext && !active && (
+                        <Badge variant="secondary" className="text-xs font-semibold">
+                          UP NEXT
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className={cn("text-xs capitalize", colors.text)}>
+                        {category}
+                      </Badge>
                     </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFocusMode(isFocused ? null : item.id)}
+                    >
+                      {isFocused ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setEditingItem(item)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteScheduleItem(item.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-              </Card>
-            )
-          })}
-        </div>
-      )}
+
+                {/* Progress */}
+                {active && (
+                  <div className="space-y-1 mb-3 p-3 bg-secondary/50 rounded-lg">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground font-semibold">{getTimeRemaining(item)}</span>
+                      <span className="font-bold text-base">{Math.round(progress)}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2.5" />
+                  </div>
+                )}
+
+                {/* Tasks and Notes */}
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  {tasks.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      {completedTasks === tasks.length ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <span className="text-muted-foreground font-medium">
+                        {completedTasks}/{tasks.length} tasks
+                      </span>
+                    </div>
+                  )}
+                  {item.notes && (
+                    <div className="flex items-center gap-2">
+                      <StickyNote className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground font-medium">Has notes</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )
+    })}
+  </div>
+)}
+
 
       {/* Empty State */}
       {filteredItems.length === 0 && scheduleItems.length > 0 && (

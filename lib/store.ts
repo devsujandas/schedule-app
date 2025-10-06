@@ -41,6 +41,7 @@ interface ScheduleStore {
   addTask: (scheduleId: string, text: string) => void
   toggleTask: (scheduleId: string, taskId: string) => void
   deleteTask: (scheduleId: string, taskId: string) => void
+  updateTask: (scheduleId: string, taskId: string, newText: string) => void   //  new added
   updateNotes: (scheduleId: string, notes: string) => void
   importSchedule: (items: ScheduleItem[]) => void
   clearAllData: () => void
@@ -51,77 +52,78 @@ interface ScheduleStore {
 
 const defaultSchedule: ScheduleItem[] = [
   {
-    id: "1",
-    title: "Sleep",
-    description: "Recharge and recover",
-    timeRange: "02:00 - 09:00",
-    startHour: 2,
-    endHour: 9,
-    icon: "bed",
-    tasks: [],
-    category: "rest",
-    notes: "",
-  },
-  {
-    id: "2",
-    title: "Study Time",
-    description: "Deep focus learning",
-    timeRange: "10:00 - 15:00",
-    startHour: 10,
-    endHour: 15,
-    icon: "book-open",
-    tasks: [],
-    category: "study",
-    notes: "",
-  },
-  {
-    id: "3",
-    title: "Study Time",
-    description: "Review and practice",
-    timeRange: "16:00 - 17:30",
-    startHour: 16,
-    endHour: 17.5,
-    icon: "book-open",
-    tasks: [],
-    category: "study",
-    notes: "",
-  },
-  {
-    id: "4",
-    title: "Relax / Nap",
-    description: "A well-deserved break",
-    timeRange: "17:30 - 19:30",
-    startHour: 17.5,
-    endHour: 19.5,
-    icon: "coffee",
-    tasks: [],
-    category: "rest",
-    notes: "",
-  },
-  {
-    id: "5",
-    title: "Study Time",
-    description: "Evening study session",
-    timeRange: "19:30 - 22:00",
-    startHour: 19.5,
-    endHour: 22,
-    icon: "book-open",
-    tasks: [],
-    category: "study",
-    notes: "",
-  },
-  {
-    id: "6",
-    title: "Study Time",
-    description: "Late night grinding",
-    timeRange: "23:00 - 02:00",
-    startHour: 23,
-    endHour: 2,
-    icon: "brain-circuit",
-    tasks: [],
-    category: "study",
-    notes: "",
-  },
+  id: "1",
+  title: "Sleep",
+  description: "Deep rest for recovery",
+  timeRange: "11:00 PM - 07:00 AM",
+  startHour: 23,
+  endHour: 7,
+  icon: "bed",
+  tasks: [],
+  category: "rest",
+  notes: "",
+},
+{
+  id: "2",
+  title: "Morning Work",
+  description: "Start tasks with focus",
+  timeRange: "08:00 AM - 10:00 AM",
+  startHour: 8,
+  endHour: 10,
+  icon: "brain-circuit",
+  tasks: [],
+  category: "work",
+  notes: "",
+},
+{
+  id: "3",
+  title: "Study Session",
+  description: "Learn and review topics",
+  timeRange: "10:30 AM - 01:30 PM",
+  startHour: 10.5,
+  endHour: 13.5,
+  icon: "book-open",
+  tasks: [],
+  category: "study",
+  notes: "",
+},
+{
+  id: "4",
+  title: "Exercise Hour",
+  description: "Move and stay healthy",
+  timeRange: "02:00 PM - 03:00 PM",
+  startHour: 14,
+  endHour: 15,
+  icon: "brain-circuit",
+  tasks: [],
+  category: "exercise",
+  notes: "",
+},
+{
+  id: "5",
+  title: "Personal Growth",
+  description: "Focus on self improvement",
+  timeRange: "04:00 PM - 06:00 PM",
+  startHour: 16,
+  endHour: 18,
+  icon: "book-open",
+  tasks: [],
+  category: "personal",
+  notes: "",
+},
+{
+  id: "6",
+  title: "Social Time",
+  description: "Connect and relax together",
+  timeRange: "07:00 PM - 10:00 PM",
+  startHour: 19,
+  endHour: 22,
+  icon: "coffee",
+  tasks: [],
+  category: "social",
+  notes: "",
+},
+
 ]
 
 export const useScheduleStore = create<ScheduleStore>()(
@@ -144,7 +146,9 @@ export const useScheduleStore = create<ScheduleStore>()(
 
       updateScheduleItem: (id, updates) => {
         set((state) => ({
-          scheduleItems: state.scheduleItems.map((item) => (item.id === id ? { ...item, ...updates } : item)),
+          scheduleItems: state.scheduleItems.map((item) =>
+            item.id === id ? { ...item, ...updates } : item
+          ),
         }))
       },
 
@@ -163,7 +167,9 @@ export const useScheduleStore = create<ScheduleStore>()(
         }
         set((state) => ({
           scheduleItems: state.scheduleItems.map((item) =>
-            item.id === scheduleId ? { ...item, tasks: [...(item.tasks || []), newTask] } : item,
+            item.id === scheduleId
+              ? { ...item, tasks: [...(item.tasks || []), newTask] }
+              : item
           ),
         }))
       },
@@ -175,10 +181,12 @@ export const useScheduleStore = create<ScheduleStore>()(
               ? {
                   ...item,
                   tasks: (item.tasks || []).map((task) =>
-                    task.id === taskId ? { ...task, completed: !task.completed } : task,
+                    task.id === taskId
+                      ? { ...task, completed: !task.completed }
+                      : task
                   ),
                 }
-              : item,
+              : item
           ),
         }))
       },
@@ -189,16 +197,36 @@ export const useScheduleStore = create<ScheduleStore>()(
             item.id === scheduleId
               ? {
                   ...item,
-                  tasks: (item.tasks || []).filter((task) => task.id !== taskId),
+                  tasks: (item.tasks || []).filter(
+                    (task) => task.id !== taskId
+                  ),
                 }
-              : item,
+              : item
+          ),
+        }))
+      },
+
+      //  NEW — for editing a task text
+      updateTask: (scheduleId, taskId, newText) => {
+        set((state) => ({
+          scheduleItems: state.scheduleItems.map((item) =>
+            item.id === scheduleId
+              ? {
+                  ...item,
+                  tasks: (item.tasks || []).map((task) =>
+                    task.id === taskId ? { ...task, text: newText } : task
+                  ),
+                }
+              : item
           ),
         }))
       },
 
       updateNotes: (scheduleId, notes) => {
         set((state) => ({
-          scheduleItems: state.scheduleItems.map((item) => (item.id === scheduleId ? { ...item, notes } : item)),
+          scheduleItems: state.scheduleItems.map((item) =>
+            item.id === scheduleId ? { ...item, notes } : item
+          ),
         }))
       },
 
@@ -218,8 +246,15 @@ export const useScheduleStore = create<ScheduleStore>()(
         const items = get().scheduleItems
         return {
           totalItems: items.length,
-          totalTasks: items.reduce((acc, item) => acc + (item.tasks?.length || 0), 0),
-          completedTasks: items.reduce((acc, item) => acc + (item.tasks?.filter((t) => t.completed).length || 0), 0),
+          totalTasks: items.reduce(
+            (acc, item) => acc + (item.tasks?.length || 0),
+            0
+          ),
+          completedTasks: items.reduce(
+            (acc, item) =>
+              acc + (item.tasks?.filter((t) => t.completed).length || 0),
+            0
+          ),
         }
       },
 
@@ -247,6 +282,6 @@ export const useScheduleStore = create<ScheduleStore>()(
     }),
     {
       name: "schedule-storage",
-    },
-  ),
+    }
+  )
 )
