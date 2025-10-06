@@ -15,6 +15,7 @@ import {
   Minimize,
   BellOff,
   Flag,
+  Calculator,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -78,8 +79,8 @@ const StylishTimeScroller = ({
         e.preventDefault(); // Prevent page scroll during touch move
         const delta = touchStartY.current - e.touches[0].clientY;
         if (Math.abs(delta) > 10) { // Threshold to start scrolling
-           handleDelta(delta);
-           touchStartY.current = e.touches[0].clientY;
+          handleDelta(delta);
+          touchStartY.current = e.touches[0].clientY;
         }
       },
       onTouchEnd: () => {
@@ -103,20 +104,20 @@ const StylishTimeScroller = ({
   return (
     <div className="flex flex-col items-center text-center select-none" {...eventHandlers}>
         <span className="text-2xl text-muted-foreground/30 h-8">
-            {String(prev).padStart(2, '0')}
+          {String(prev).padStart(2, '0')}
         </span>
         <motion.div
-            key={current}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="text-6xl font-bold text-foreground h-16"
+          key={current}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.2 }}
+          className="text-6xl font-bold text-foreground h-16"
         >
-            {String(current).padStart(2, '0')}
+          {String(current).padStart(2, '0')}
         </motion.div>
         <span className="text-2xl text-muted-foreground/30 h-8">
-            {String(next).padStart(2, '0')}
+          {String(next).padStart(2, '0')}
         </span>
         <span className="text-sm font-light text-muted-foreground tracking-widest mt-2">{unit}</span>
     </div>
@@ -191,8 +192,8 @@ export default function ToolsPage() {
       const { oscillator, gainNode, intervalId } = alarmSoundNodesRef.current
       if (intervalId) clearInterval(intervalId)
       if (audioContextRef.current) {
-         gainNode.gain.cancelScheduledValues(audioContextRef.current.currentTime)
-         oscillator.stop()
+          gainNode.gain.cancelScheduledValues(audioContextRef.current.currentTime)
+          oscillator.stop()
       }
       alarmSoundNodesRef.current = null
     }
@@ -400,34 +401,56 @@ export default function ToolsPage() {
               </div>
             </div>
           </header>
+          {/* --- NAVBAR SECTION: MODIFIED FOR RESPONSIVENESS --- */}
           <nav className="border-b border-border bg-card/30 sticky top-14 sm:top-16 z-40">
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8"><div className="flex gap-1 py-2 overflow-x-auto scrollbar-hide">
-              <Button variant={activeView === "clock" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("clock")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4"><Clock className="w-4 h-4" /> Clock</Button>
-              <Button variant={activeView === "stopwatch" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("stopwatch")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4"><Stopwatch className="w-4 h-4" /> Stopwatch</Button>
-              <Button variant={activeView === "timer" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("timer")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4"><Timer className="w-4 h-4" /> Timer</Button>
-            </div></div>
+            <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+              <div className="grid grid-cols-4 gap-2 py-2 sm:flex sm:gap-1 sm:overflow-x-auto sm:scrollbar-hide">
+                <Button variant={activeView === "clock" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("clock")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto">
+                  <Clock className="w-4 h-4" /> Clock
+                </Button>
+
+                <Button variant={activeView === "stopwatch" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("stopwatch")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto">
+                  <Stopwatch className="w-4 h-4" /> Stopwatch
+                </Button>
+
+                <Button variant={activeView === "timer" ? "default" : "ghost"} size="sm" onClick={() => setActiveView("timer")} className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto">
+                  <Timer className="w-4 h-4" /> Timer
+                </Button>
+
+                {/* 🔹 নতুন Calculator বাটন */}
+                <a href="/tools/calculator">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 sm:gap-2 flex-shrink-0 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto"
+                  >
+                    <Calculator className="w-4 h-4" /> Calculator
+                  </Button>
+                </a>
+              </div>
+            </div>
           </nav>
       </>)}
       <main ref={fullscreenRef} className={`${ isFullscreen ? "fixed inset-0 z-[100] bg-background" : "max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8"}`}>
         <AnimatePresence mode="wait">
           {activeView === "clock" && (
             <motion.div key="clock" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className={`flex items-center justify-center ${ isFullscreen ? "h-screen" : "min-h-[60vh]"}`}>
-               <Card className={`${ isFullscreen ? "border-0 shadow-none bg-background w-full h-full flex items-center justify-center" : "p-8 sm:p-12 lg:p-16"}`}><div className="text-center space-y-4 relative">
+                <Card className={`${ isFullscreen ? "border-0 shadow-none bg-background w-full h-full flex items-center justify-center" : "p-8 sm:p-12 lg:p-16"}`}><div className="text-center space-y-4 relative">
                   <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4">{isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}</Button>
                   <div className={`font-bold font-mono tracking-tight ${ isFullscreen ? "text-8xl sm:text-9xl lg:text-[12rem]" : "text-6xl sm:text-7xl lg:text-8xl"}`}>{currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit"})}</div>
                   <div className={`text-muted-foreground ${ isFullscreen ? "text-3xl sm:text-4xl" : "text-xl sm:text-2xl"}`}>{currentTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric"})}</div>
-               </div></Card>
+                </div></Card>
             </motion.div>
           )}
           {activeView === "stopwatch" && (
             <motion.div key="stopwatch" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className={`flex items-center justify-center ${ isFullscreen ? "h-screen" : "min-h-[60vh]"}`}>
-               <Card className={`${ isFullscreen ? "border-0 shadow-none bg-background w-full h-full flex flex-col items-center justify-center" : "p-8 sm:p-12 lg:p-16 w-full max-w-2xl"}`}><div className="text-center space-y-8 relative w-full">
+                <Card className={`${ isFullscreen ? "border-0 shadow-none bg-background w-full h-full flex flex-col items-center justify-center" : "p-8 sm:p-12 lg:p-16 w-full max-w-2xl"}`}><div className="text-center space-y-8 relative w-full">
                   <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="absolute top-0 right-0 sm:top-2 sm:right-2">{isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}</Button>
                   <div className={`font-bold font-mono tracking-tight ${ isFullscreen ? "text-8xl sm:text-9xl lg:text-[12rem]" : "text-6xl sm:text-7xl lg:text-8xl"}`}>{formatStopwatchTime(stopwatchTime)}</div>
                   <div className="flex items-center justify-center gap-4">
-                     <Button size="lg" variant="outline" onClick={handleStopwatchReset} className="gap-2 px-8 bg-transparent"><RotateCcw className="w-5 h-5" /> Reset</Button>
-                     <Button size="lg" onClick={handleStopwatchToggle} className="gap-2 px-8">{isStopwatchRunning ? ( <> <Pause className="w-5 h-5" /> Pause </> ) : ( <> <Play className="w-5 h-5" /> Start </>)}</Button>
-                     <Button size="lg" variant="outline" onClick={handleStopwatchLap} disabled={!isStopwatchRunning && laps.length === 0} className="gap-2 px-8 bg-transparent"><Flag className="w-5 h-5" /> Lap</Button>
+                      <Button size="lg" variant="outline" onClick={handleStopwatchReset} className="gap-2 px-8 bg-transparent"><RotateCcw className="w-5 h-5" /> Reset</Button>
+                      <Button size="lg" onClick={handleStopwatchToggle} className="gap-2 px-8">{isStopwatchRunning ? ( <> <Pause className="w-5 h-5" /> Pause </> ) : ( <> <Play className="w-5 h-5" /> Start </>)}</Button>
+                      <Button size="lg" variant="outline" onClick={handleStopwatchLap} disabled={!isStopwatchRunning && laps.length === 0} className="gap-2 px-8 bg-transparent"><Flag className="w-5 h-5" /> Lap</Button>
                   </div>
                   <AnimatePresence>
                     {laps.length > 0 && (
@@ -449,12 +472,12 @@ export default function ToolsPage() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-               </div></Card>
+                </div></Card>
             </motion.div>
           )}
           {activeView === "timer" && (
             <motion.div key="timer" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className={`flex items-center justify-center ${ isFullscreen ? "h-screen" : "min-h-[60vh]"}`}>
-               <Card className={`${ isFullscreen ? "border-0 shadow-none bg-background w-full h-full flex flex-col items-center justify-center" : "p-8 sm:p-12 lg:p-16 w-full max-w-2xl"}`}><div className="text-center space-y-8 relative w-full">
+                <Card className={`${ isFullscreen ? "border-0 shadow-none bg-background w-full h-full flex flex-col items-center justify-center" : "p-8 sm:p-12 lg:p-16 w-full max-w-2xl"}`}><div className="text-center space-y-8 relative w-full">
                   <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="absolute top-0 right-0 sm:top-2 sm:right-2">{isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}</Button>
                   {(timerRemaining > 0 || isTimerRunning || isAlarmPlaying) ? (
                     <div className="flex flex-col items-center justify-center space-y-8">
@@ -473,8 +496,8 @@ export default function ToolsPage() {
                          )}
                        </div>
                     </div>
-                   ) : (
-                     <div className="w-full flex flex-col items-center justify-center space-y-6 sm:space-y-10">
+                    ) : (
+                      <div className="w-full flex flex-col items-center justify-center space-y-6 sm:space-y-10">
                         <div className="flex items-center justify-center gap-4 sm:gap-8 cursor-grab active:cursor-grabbing">
                           <StylishTimeScroller value={timerHours} onValueChange={setTimerHours} unit="HOURS" range={hours} />
                           <StylishTimeScroller value={timerMinutes} onValueChange={setTimerMinutes} unit="MINUTES" range={minutesAndSeconds} />
@@ -482,15 +505,15 @@ export default function ToolsPage() {
                         </div>
 
                         <div className="flex flex-wrap items-center justify-center gap-3">
-                           {[5, 10, 15, 30, 45, 60].map((min) => (<Button key={min} variant="outline" className="rounded-full px-4 py-2 text-sm sm:px-5 sm:py-2.5 sm:text-base hover:bg-primary/10 hover:border-primary/50 transition-colors" onClick={() => handlePresetTimerClick(min)}>{min} min</Button>))}
+                          {[5, 10, 15, 30, 45, 60].map((min) => (<Button key={min} variant="outline" className="rounded-full px-4 py-2 text-sm sm:px-5 sm:py-2.5 sm:text-base hover:bg-primary/10 hover:border-primary/50 transition-colors" onClick={() => handlePresetTimerClick(min)}>{min} min</Button>))}
                         </div>
 
                         <div className="w-full pt-4">
-                           <Button size="lg" onClick={handleTimerStart} disabled={timerHours === 0 && timerMinutes === 0 && timerSeconds === 0} className="w-full max-w-xs mx-auto h-12 sm:h-14 text-lg sm:text-xl rounded-full"><Play className="w-5 h-5 sm:w-6 sm:h-6 mr-2" /> Start</Button>
+                          <Button size="lg" onClick={handleTimerStart} disabled={timerHours === 0 && timerMinutes === 0 && timerSeconds === 0} className="w-full max-w-xs mx-auto h-12 sm:h-14 text-lg sm:text-xl rounded-full"><Play className="w-5 h-5 sm:w-6 sm:h-6 mr-2" /> Start</Button>
                         </div>
-                     </div>
-                   )}
-               </div></Card>
+                      </div>
+                    )}
+                </div></Card>
             </motion.div>
           )}
         </AnimatePresence>
@@ -498,4 +521,3 @@ export default function ToolsPage() {
     </div>
   )
 }
-
