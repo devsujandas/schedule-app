@@ -614,37 +614,8 @@ export default function EditorPage() {
             <ToolbarButton onAction={() => exec("undo")}><Undo className="h-4 w-4" /></ToolbarButton>
             <ToolbarButton onAction={() => exec("redo")}><Redo className="h-4 w-4" /></ToolbarButton>
 
-            {/* ✅ Updated Font Dropdown */}
-            <div className="flex items-center gap-2">
-              <select
-                value={fontFamily}
-                onChange={(e) => changeFontFamily(e.target.value)}
-                className="rounded border p-1 text-sm bg-background text-foreground focus:outline-none"
-              >
-                <option>Arial</option>
-                <option>Georgia</option>
-                <option>Times New Roman</option>
-                <option>Courier New</option>
-                <option>Verdana</option>
-                <option>Monospace</option>
-                <option>Roboto</option>
-                <option>Poppins</option>
-                <option>Inter</option>
-                <option>Comic Sans MS</option>
-              </select>
-
-              <select
-                value={fontSize}
-                onChange={(e) => applyFormatToSelection("fontSize", e.target.value)}
-                className="rounded border p-1 text-sm bg-background text-foreground focus:outline-none"
-              >
-                {["12px", "14px", "16px", "18px", "20px", "22px", "24px", "28px", "32px"].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </div>
+         
+           
           </div>
 
           {/* Editor - Scrollable in fullscreen */}
