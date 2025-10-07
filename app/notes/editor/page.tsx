@@ -22,6 +22,13 @@ import {
   Copy,
   Trash2,
   ArrowLeft,
+  Plus,
+  X,
+  Rows,
+  Columns,
+  CrossIcon,
+  XCircle,
+  CircleX,
 } from "lucide-react"
 import { useNotesStore } from "@/lib/notesStore"
 import { Button } from "@/components/ui/button"
@@ -76,6 +83,16 @@ export default function EditorPage() {
   const [fontSize, setFontSize] = useState("16px")
   const [copied, setCopied] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showTablePopup, setShowTablePopup] = useState(false)
+  const [tableRows, setTableRows] = useState(3)
+  const [tableCols, setTableCols] = useState(3)
+  const [activeFormats, setActiveFormats] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+  })
+  const [selectedTable, setSelectedTable] = useState<HTMLTableElement | null>(null)
+  const [showTableTools, setShowTableTools] = useState(false)
 
   // Load note
   useEffect(() => {
@@ -94,8 +111,22 @@ export default function EditorPage() {
   // Selection handling
   const saveSelection = () => {
     const sel = window.getSelection()
-    if (sel && sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0)
+    if (sel && sel.rangeCount > 0) {
+      savedRangeRef.current = sel.getRangeAt(0)
+      
+      // Check if selection is inside a table
+      const selectedElement = sel.anchorNode?.parentElement
+      const table = selectedElement?.closest('table')
+      if (table) {
+        setSelectedTable(table as HTMLTableElement)
+        setShowTableTools(true)
+      } else {
+        setSelectedTable(null)
+        setShowTableTools(false)
+      }
+    }
   }
+  
   const restoreSelection = () => {
     const range = savedRangeRef.current
     if (!range) return
@@ -104,13 +135,29 @@ export default function EditorPage() {
     sel.removeAllRanges()
     sel.addRange(range)
   }
+  
   const ensureFocus = () => editorRef.current?.focus()
+
+  // Check active formats
+  const checkActiveFormats = () => {
+    if (!editorRef.current) return
+    const isBold = document.queryCommandState("bold")
+    const isItalic = document.queryCommandState("italic")
+    const isUnderline = document.queryCommandState("underline")
+    
+    setActiveFormats({
+      bold: isBold,
+      italic: isItalic,
+      underline: isUnderline,
+    })
+  }
 
   const exec = (cmd: Cmd) => {
     ensureFocus()
     restoreSelection()
     document.execCommand(cmd, false)
     saveSelection()
+    checkActiveFormats()
   }
 
   const insertHorizontalLine = () => {
@@ -160,21 +207,27 @@ export default function EditorPage() {
     saveSelection()
   }
 
-  const insertTable = (rows = 3, cols = 3) => {
+  // Enhanced table functionality
+  const insertTable = (rows = tableRows, cols = tableCols) => {
     ensureFocus()
+    restoreSelection()
+    
     const table = document.createElement("table")
     table.setAttribute("border", "1")
-    table.className =
-      "w-full border-collapse border border-foreground/20 [&_td]:border [&_td]:border-foreground/20 [&_td]:p-2"
+    table.className = "w-full border-collapse border border-foreground/20 my-2 [&_td]:border [&_td]:border-foreground/20 [&_td]:p-2 [&_td]:min-w-[80px]"
+    
+    // Create data rows
     for (let r = 0; r < rows; r++) {
       const tr = document.createElement("tr")
       for (let c = 0; c < cols; c++) {
         const td = document.createElement("td")
         td.innerHTML = "&nbsp;"
+        td.contentEditable = "true"
         tr.appendChild(td)
       }
       table.appendChild(tr)
     }
+
     const range = savedRangeRef.current
     if (range) {
       range.deleteContents()
@@ -182,6 +235,85 @@ export default function EditorPage() {
     } else {
       editorRef.current?.appendChild(table)
     }
+    
+    // Select the new table
+    setSelectedTable(table)
+    setShowTableTools(true)
+    saveSelection()
+    setShowTablePopup(false)
+  }
+
+  // Table manipulation functions
+  const addTableRow = () => {
+    if (!selectedTable) return
+    
+    ensureFocus()
+    const rows = selectedTable.getElementsByTagName("tr")
+    const cols = rows[0].cells.length
+    
+    const newRow = document.createElement("tr")
+    for (let c = 0; c < cols; c++) {
+      const td = document.createElement("td")
+      td.innerHTML = "&nbsp;"
+      td.contentEditable = "true"
+      newRow.appendChild(td)
+    }
+    
+    selectedTable.appendChild(newRow)
+    saveSelection()
+  }
+
+  const addTableColumn = () => {
+    if (!selectedTable) return
+    
+    ensureFocus()
+    const rows = selectedTable.getElementsByTagName("tr")
+    
+    for (let i = 0; i < rows.length; i++) {
+      const newCell = document.createElement("td")
+      newCell.innerHTML = "&nbsp;"
+      newCell.contentEditable = "true"
+      newCell.className = "p-2 border border-foreground/20"
+      rows[i].appendChild(newCell)
+    }
+    
+    saveSelection()
+  }
+
+  const deleteTableRow = () => {
+    if (!selectedTable) return
+    
+    ensureFocus()
+    const rows = selectedTable.getElementsByTagName("tr")
+    if (rows.length > 1) {
+      const lastRow = rows[rows.length - 1]
+      lastRow.remove()
+    }
+    
+    saveSelection()
+  }
+
+  const deleteTableColumn = () => {
+    if (!selectedTable) return
+    
+    ensureFocus()
+    const rows = selectedTable.getElementsByTagName("tr")
+    
+    for (let i = 0; i < rows.length; i++) {
+      const cells = rows[i].cells
+      if (cells.length > 1) {
+        cells[cells.length - 1].remove()
+      }
+    }
+    
+    saveSelection()
+  }
+
+  const deleteTable = () => {
+    if (!selectedTable) return
+    selectedTable.remove()
+    setSelectedTable(null)
+    setShowTableTools(false)
     saveSelection()
   }
 
@@ -191,7 +323,49 @@ export default function EditorPage() {
     document.execCommand("removeFormat", false)
     document.execCommand("unlink", false)
     saveSelection()
+    checkActiveFormats()
   }
+
+  // Apply formatting to selection
+  const applyFormatToSelection = (format: string, value?: string) => {
+  ensureFocus()
+  restoreSelection()
+
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return
+
+  if (format === "fontSize" && value) {
+    document.execCommand("fontSize", false, "7")
+
+    const range = selection.getRangeAt(0)
+    const parent = range.commonAncestorContainer as HTMLElement
+
+    // find affected <font> elements safely
+    const fontElements =
+      parent.nodeType === Node.ELEMENT_NODE
+        ? (parent as HTMLElement).querySelectorAll('font[size="7"]')
+        : parent.parentElement?.querySelectorAll('font[size="7"]')
+
+    if (fontElements && fontElements.length > 0) {
+      fontElements.forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.removeAttribute("size")
+          el.style.fontSize = value
+        }
+      })
+    }
+  } 
+  else if (format === "fontFamily" && value) {
+    document.execCommand("fontName", false, value)
+  } 
+  else {
+    document.execCommand(format, false, value)
+  }
+
+  saveSelection()
+  checkActiveFormats()
+}
+
 
   // Autosave
   useEffect(() => {
@@ -237,8 +411,7 @@ export default function EditorPage() {
 
   const toggleFullscreen = () => {
     setIsFullscreen((prev) => !prev)
-    const el = editorRef.current?.parentElement?.parentElement
-    if (!el) return
+    const el = document.documentElement
     if (!document.fullscreenElement) {
       el.requestFullscreen?.()
     } else {
@@ -246,23 +419,54 @@ export default function EditorPage() {
     }
   }
 
+  // Handle fullscreen change
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  // Close table tools when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!editorRef.current?.contains(e.target as Node)) {
+        setShowTableTools(false)
+        setSelectedTable(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   return (
     <main
-      className={`mx-auto w-full max-w-5xl px-4 py-6 transition-all duration-300 ${
-        isFullscreen ? "max-w-none h-screen" : ""
+      className={`mx-auto w-full transition-all duration-300 ${
+        isFullscreen 
+          ? "fixed inset-0 z-50 bg-background p-0 m-0 h-screen" 
+          : "max-w-5xl px-4 py-6"
       }`}
     >
       {!hasHydrated ? (
         <div className="text-muted-foreground">Loading editor…</div>
       ) : (
-        <Card className="rounded-2xl shadow-xl border overflow-hidden bg-transparent">
-          <CardHeader className="p-4 border-b flex flex-col sm:flex-row items-center justify-between gap-3">
+        <Card className={`rounded-2xl shadow-xl border overflow-hidden bg-transparent ${
+          isFullscreen ? "h-screen rounded-none" : ""
+        }`}>
+          <CardHeader className={`p-4 border-b flex flex-col sm:flex-row items-center justify-between gap-3 ${
+            isFullscreen ? "sticky top-0 bg-background z-10" : ""
+          }`}>
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Button variant="ghost" size="icon" asChild>
-                <Link href="/notes">
-                  <ArrowLeft className="w-5 h-5" />
-                </Link>
-              </Button>
+              {!isFullscreen && (
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href="/notes">
+                    <ArrowLeft className="w-5 h-5" />
+                  </Link>
+                </Button>
+              )}
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -299,17 +503,113 @@ export default function EditorPage() {
             </div>
           </CardHeader>
 
-          {/* Toolbar */}
-          <div className="flex flex-wrap items-center justify-center gap-2 border-b bg-background/60 backdrop-blur-md p-3">
-            <ToolbarButton onAction={() => exec("bold")}><Bold className="h-4 w-4" /></ToolbarButton>
-            <ToolbarButton onAction={() => exec("italic")}><Italic className="h-4 w-4" /></ToolbarButton>
-            <ToolbarButton onAction={() => exec("underline")}><Underline className="h-4 w-4" /></ToolbarButton>
+          {/* Toolbar - Fixed in fullscreen */}
+          <div className={`flex flex-wrap items-center justify-center gap-2 border-b bg-background/95 backdrop-blur-md p-3 ${
+            isFullscreen ? "sticky top-[73px] z-10" : ""
+          }`}>
+            {/* Main Formatting Tools */}
+            <ToolbarButton 
+              onAction={() => exec("bold")} 
+              isActive={activeFormats.bold}
+            >
+              <Bold className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton 
+              onAction={() => exec("italic")} 
+              isActive={activeFormats.italic}
+            >
+              <Italic className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton 
+              onAction={() => exec("underline")} 
+              isActive={activeFormats.underline}
+            >
+              <Underline className="h-4 w-4" />
+            </ToolbarButton>
             <ToolbarButton onAction={() => exec("justifyLeft")}><AlignLeft className="h-4 w-4" /></ToolbarButton>
             <ToolbarButton onAction={() => exec("justifyCenter")}><AlignCenter className="h-4 w-4" /></ToolbarButton>
             <ToolbarButton onAction={() => exec("justifyRight")}><AlignRight className="h-4 w-4" /></ToolbarButton>
             <ToolbarButton onAction={insertHorizontalLine}><Minus className="h-4 w-4" /></ToolbarButton>
             <ToolbarButton onAction={insertCheckbox}><CheckSquare className="h-4 w-4" /></ToolbarButton>
-            <ToolbarButton onAction={() => insertTable(3, 3)}><Table className="h-4 w-4" /></ToolbarButton>
+            
+            {/* Table Insert Button */}
+            <div className="relative">
+              <ToolbarButton onAction={() => setShowTablePopup(!showTablePopup)}>
+                <Table className="h-4 w-4" />
+              </ToolbarButton>
+              
+              {showTablePopup && (
+                <div className="absolute top-full left-0 mt-2 bg-background border rounded-lg shadow-lg z-20 p-4 min-w-[200px]">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold">Insert Table</h4>
+                    <Button variant="ghost" size="icon" onClick={() => setShowTablePopup(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Rows</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={tableRows}
+                        onChange={(e) => setTableRows(Number(e.target.value))}
+                        className="w-full h-8"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Columns</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={tableCols}
+                        onChange={(e) => setTableCols(Number(e.target.value))}
+                        className="w-full h-8"
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => insertTable(tableRows, tableCols)}
+                    className="w-full"
+                  >
+                    Insert Table
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Table Tools - Show when table is selected */}
+            {showTableTools && selectedTable && (
+              <>
+                <div className="h-6 w-px bg-border mx-1"></div>
+                <span className="text-xs text-muted-foreground font-medium">Table:</span>
+                <ToolbarButton onAction={addTableRow}>
+                  <Rows className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Add Row</span>
+                </ToolbarButton>
+                <ToolbarButton onAction={addTableColumn}>
+                  <Columns className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Add Column</span>
+                </ToolbarButton>
+                <ToolbarButton onAction={deleteTableRow}>
+                  <Rows className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Delete Row</span>
+                </ToolbarButton>
+                <ToolbarButton onAction={deleteTableColumn}>
+                  <Columns className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Delete Column</span>
+                </ToolbarButton>
+                <ToolbarButton onAction={deleteTable}>
+                  <Trash2 className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Delete Table</span>
+                </ToolbarButton>
+              </>
+            )}
+
             <ToolbarButton onAction={clearFormatting}><Eraser className="h-4 w-4" /></ToolbarButton>
             <ToolbarButton onAction={() => exec("undo")}><Undo className="h-4 w-4" /></ToolbarButton>
             <ToolbarButton onAction={() => exec("redo")}><Redo className="h-4 w-4" /></ToolbarButton>
@@ -319,7 +619,7 @@ export default function EditorPage() {
               <select
                 value={fontFamily}
                 onChange={(e) => changeFontFamily(e.target.value)}
-                className="rounded border p-1 text-sm bg-white text-black dark:bg-neutral-900 dark:text-white focus:outline-none"
+                className="rounded border p-1 text-sm bg-background text-foreground focus:outline-none"
               >
                 <option>Arial</option>
                 <option>Georgia</option>
@@ -335,8 +635,8 @@ export default function EditorPage() {
 
               <select
                 value={fontSize}
-                onChange={(e) => changeFontSize(e.target.value)}
-                className="rounded border p-1 text-sm bg-white text-black dark:bg-neutral-900 dark:text-white focus:outline-none"
+                onChange={(e) => applyFormatToSelection("fontSize", e.target.value)}
+                className="rounded border p-1 text-sm bg-background text-foreground focus:outline-none"
               >
                 {["12px", "14px", "16px", "18px", "20px", "22px", "24px", "28px", "32px"].map((size) => (
                   <option key={size} value={size}>
@@ -347,47 +647,101 @@ export default function EditorPage() {
             </div>
           </div>
 
-          {/* Editor */}
+          {/* Editor - Scrollable in fullscreen */}
           <CardContent className="p-0">
             <div
               ref={editorRef}
-              className="min-h-[500px] w-full border-y p-5 text-base leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
+              className={`w-full border-y p-5 text-base leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all ${
+                isFullscreen ? "h-[calc(100vh-140px)] overflow-y-auto" : "min-h-[500px]"
+              }`}
               style={{ fontFamily, fontSize }}
               contentEditable
               suppressContentEditableWarning
               onInput={(e) => {
                 saveSelection()
                 setContentHtmlState((e.currentTarget as HTMLDivElement).innerHTML)
+                checkActiveFormats()
               }}
               onFocus={saveSelection}
-              onMouseUp={saveSelection}
-              onKeyUp={saveSelection}
+              onMouseUp={() => {
+                saveSelection()
+                checkActiveFormats()
+              }}
+              onKeyUp={() => {
+                saveSelection()
+                checkActiveFormats()
+              }}
+              onClick={checkActiveFormats}
             />
           </CardContent>
 
-          <CardFooter className="flex items-center justify-between text-xs text-muted-foreground p-3">
-            <div>
-              {status === "saving"
-                ? "Saving…"
-                : status === "saved" && lastSavedAt
-                ? `Saved at ${new Date(lastSavedAt).toLocaleTimeString()}`
-                : ""}
-            </div>
-            <div>{wordCount(editorRef.current?.innerHTML || "")} words</div>
-          </CardFooter>
+          {(status === "saving" || status === "saved") && (
+  <div
+    className={`
+      fixed bottom-6 right-6 flex items-center gap-2 px-4 py-2
+      rounded-full shadow-lg border backdrop-blur-md transition-all duration-300
+      ${status === "saving"
+        ? "bg-yellow-500/90 border-yellow-400 text-white"
+        : "bg-emerald-500/90 border-emerald-400 text-white"}
+    `}
+  >
+    <span>
+      {status === "saving"
+        ? "Saving…"
+        : lastSavedAt
+        ? `Saved at ${new Date(lastSavedAt).toLocaleTimeString()}`
+        : "Saved"}
+    </span>
+
+  <button
+  type="button"
+  onMouseDown={(e) => {
+    e.preventDefault()
+    setStatus("idle")
+  }}
+  aria-label="Close notification"
+  className="
+    ml-2 flex items-center justify-center
+    p-1.5 rounded-full
+    bg-white/10 hover:bg-white/20
+    transition-all duration-200
+    text-red-400 hover:text-red-500
+    backdrop-blur-sm shadow-sm hover:shadow-md
+    border border-white/10 hover:border-white/20
+  "
+>
+  <CircleX className="h-4 w-4" strokeWidth={2.5} />
+</button>
+
+
+  </div>
+)}
+
         </Card>
       )}
     </main>
   )
 }
 
-function ToolbarButton({ onAction, children }: { onAction: () => void; children: React.ReactNode }) {
+function ToolbarButton({ 
+  onAction, 
+  children, 
+  isActive = false 
+}: { 
+  onAction: () => void; 
+  children: React.ReactNode;
+  isActive?: boolean;
+}) {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant={isActive ? "default" : "outline"}
       size="sm"
-      className="bg-transparent hover:bg-primary/10 rounded-md transition"
+      className={`rounded-md transition ${
+        isActive 
+          ? "bg-primary text-primary-foreground" 
+          : "bg-transparent hover:bg-primary/10"
+      }`}
       onMouseDown={(e) => {
         e.preventDefault()
         onAction()
