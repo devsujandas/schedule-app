@@ -287,7 +287,7 @@ export function SettingsView() {
             <p>Your schedule — organized, private, and always ready.</p>
             
             <p>
-              Schedulaar App v2.8{" "}
+              Schedulaar App v2.9{" "}
               <span className="inline-block bg-yellow-200 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full ml-1">
                 Beta
               </span>
