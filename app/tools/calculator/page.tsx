@@ -5,13 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Calculator,
-  ArrowLeft,
-  Trash2,
-  Repeat,
-  History,
-} from "lucide-react";
+import { Calculator, ArrowLeft, Trash2, Repeat, History } from "lucide-react";
 import { useCalculatorStore } from "@/lib/calculator-store";
 
 type UnitCategory = "Length" | "Temperature" | "Weight" | "Time";
@@ -83,7 +77,6 @@ export default function CalculatorPage() {
   const [tab, setTab] = useState<"calc" | "convert">("calc");
   const [showHistory, setShowHistory] = useState(false);
 
-  // Converter
   const [category, setCategory] = useState<UnitCategory>("Length");
   const [fromUnit, setFromUnit] = useState("m");
   const [toUnit, setToUnit] = useState("km");
@@ -167,30 +160,31 @@ export default function CalculatorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-background/80 flex flex-col items-center justify-start relative">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/70 backdrop-blur-md border-b border-border">
+      <header className="sticky top-0 z-50 w-full bg-card/70 backdrop-blur-lg border-b border-border/60 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 flex justify-between items-center h-14">
           <div className="flex items-center gap-2">
             <Link href="/tools">
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button variant="ghost" size="sm" className="gap-2 hover:bg-accent/50 transition-colors">
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Back</span>
               </Button>
             </Link>
-            
           </div>
 
           <div className="flex gap-2">
             <Button
               variant={tab === "calc" ? "default" : "ghost"}
               onClick={() => setTab("calc")}
+              className="transition-all"
             >
               Calculator
             </Button>
             <Button
               variant={tab === "convert" ? "default" : "ghost"}
               onClick={() => setTab("convert")}
+              className="transition-all"
             >
               Converter
             </Button>
@@ -208,9 +202,9 @@ export default function CalculatorPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-16 right-4 bg-card border border-border rounded-lg shadow-lg p-4 w-72 z-50"
+            className="absolute top-16 right-4 bg-card/90 backdrop-blur-lg border border-border rounded-2xl shadow-xl p-4 w-72 z-50"
           >
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-3">
               <h2 className="text-sm font-semibold">History</h2>
               <Button size="sm" variant="ghost" onClick={clearHistory}>
                 <Trash2 className="w-4 h-4" />
@@ -223,7 +217,7 @@ export default function CalculatorPage() {
                 history.map((item, i) => (
                   <li
                     key={i}
-                    className="cursor-pointer hover:bg-accent px-2 py-1 rounded-md"
+                    className="cursor-pointer hover:bg-accent/60 px-2 py-1 rounded-md transition-colors"
                     onClick={() => handleHistoryClick(item)}
                   >
                     {item}
@@ -236,65 +230,66 @@ export default function CalculatorPage() {
       </AnimatePresence>
 
       {/* Main */}
-      <main className="flex-1 flex justify-center items-center p-4">
-        <Card className="w-full max-w-md p-6 shadow-lg bg-card/80 backdrop-blur-sm rounded-2xl border">
+      <main className="flex-1 w-full flex justify-center items-center p-4">
+        <Card className="w-full max-w-md p-6 shadow-2xl bg-card/80 backdrop-blur-xl rounded-3xl border border-border/70 transition-all hover:shadow-lg">
           <AnimatePresence mode="wait">
             {tab === "calc" ? (
               <motion.div
                 key="calc"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.25 }}
               >
-                {/* Display */}
-                <div className="mb-4">
+                <div className="mb-5">
                   <input
                     type="text"
                     readOnly
                     value={expression}
                     placeholder="0"
-                    className="w-full text-right text-xl bg-background rounded-md p-2 border"
+                    className="w-full text-right text-lg sm:text-xl bg-background/60 rounded-lg p-3 border border-border/50 focus:outline-none font-mono"
                   />
-                  <div className="text-right text-2xl font-semibold mt-2">
+                  <div className="text-right text-2xl sm:text-3xl font-bold mt-2 text-primary">
                     {result}
                   </div>
                 </div>
 
-                {/* Buttons */}
                 <div className="grid grid-cols-4 gap-2">
                   {buttons.map((btn) => (
                     <Button
-  key={btn}
-  onClick={() => handleClick(btn)}
-  className={`h-12 text-lg rounded-lg font-medium transition-all
-    ${
-      btn === "="
-        ? "col-span-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
-        : btn === "Clear"
-        ? "bg-red-500/80 text-white hover:bg-red-600 dark:bg-red-600/80 dark:hover:bg-red-700"
-        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-    }`}
->
-  {btn}
-</Button>
-
+                      key={btn}
+                      onClick={() => handleClick(btn)}
+                      className={`h-12 text-lg rounded-xl font-medium transition-all
+                        ${
+                          btn === "="
+                            ? "col-span-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+                            : btn === "Clear"
+                            ? "bg-red-500/80 text-white hover:bg-red-600 dark:bg-red-600/80 dark:hover:bg-red-700"
+                            : "bg-secondary/70 text-secondary-foreground hover:bg-secondary/90"
+                        }`}
+                    >
+                      {btn}
+                    </Button>
                   ))}
                 </div>
               </motion.div>
             ) : (
               <motion.div
                 key="convert"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.25 }}
               >
-                <h2 className="text-lg font-semibold mb-3">Unit Converter</h2>
+                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Calculator className="w-4 h-4" /> Unit Converter
+                </h2>
                 <div className="mb-4">
                   <label className="text-sm font-medium">Category</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as UnitCategory)}
-                    className="w-full mt-1 p-2 rounded border bg-background"
+                    className="w-full mt-1 p-2 rounded-lg border bg-background/60 focus:ring-2 focus:ring-primary/50 transition-all"
                   >
                     {Object.keys(UNIT_OPTIONS).map((c) => (
                       <option key={c}>{c}</option>
@@ -309,10 +304,9 @@ export default function CalculatorPage() {
                       value={fromUnit}
                       onChange={(e) => {
                         setFromUnit(e.target.value);
-                        if (fromValue)
-                          setToValue(convert(fromValue, e.target.value, toUnit));
+                        if (fromValue) setToValue(convert(fromValue, e.target.value, toUnit));
                       }}
-                      className="w-full mt-1 p-2 rounded border bg-background"
+                      className="w-full mt-1 p-2 rounded-lg border bg-background/60 focus:ring-2 focus:ring-primary/50 transition-all"
                     >
                       {UNIT_OPTIONS[category].map((u) => (
                         <option key={u}>{u}</option>
@@ -326,7 +320,7 @@ export default function CalculatorPage() {
                         setToValue(convert(e.target.value, fromUnit, toUnit));
                       }}
                       placeholder="Enter value"
-                      className="w-full mt-2 p-2 rounded border bg-background"
+                      className="w-full mt-2 p-2 rounded-lg border bg-background/60 focus:ring-2 focus:ring-primary/50 transition-all"
                     />
                   </div>
 
@@ -334,7 +328,7 @@ export default function CalculatorPage() {
                     variant="outline"
                     size="sm"
                     onClick={swapUnits}
-                    className="mt-2 sm:mt-7"
+                    className="mt-2 sm:mt-7 shadow-sm hover:bg-accent/50 transition-colors"
                   >
                     <Repeat className="w-4 h-4" /> Swap
                   </Button>
@@ -345,10 +339,9 @@ export default function CalculatorPage() {
                       value={toUnit}
                       onChange={(e) => {
                         setToUnit(e.target.value);
-                        if (fromValue)
-                          setToValue(convert(fromValue, fromUnit, e.target.value));
+                        if (fromValue) setToValue(convert(fromValue, fromUnit, e.target.value));
                       }}
-                      className="w-full mt-1 p-2 rounded border bg-background"
+                      className="w-full mt-1 p-2 rounded-lg border bg-background/60 focus:ring-2 focus:ring-primary/50 transition-all"
                     >
                       {UNIT_OPTIONS[category].map((u) => (
                         <option key={u}>{u}</option>
@@ -359,7 +352,7 @@ export default function CalculatorPage() {
                       readOnly
                       value={toValue}
                       placeholder="Result"
-                      className="w-full mt-2 p-2 rounded border bg-background font-semibold"
+                      className="w-full mt-2 p-2 rounded-lg border bg-background/60 font-semibold text-primary"
                     />
                   </div>
                 </div>

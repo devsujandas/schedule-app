@@ -402,10 +402,21 @@ export default function ToolsPage() {
             </div>
           </header>
           {/* --- NAVBAR SECTION: MODIFIED FOR RESPONSIVENESS --- */}
-         <nav className="border-b border-border bg-card/30 sticky top-14 sm:top-16 z-40">
+        <nav
+  className="
+    border-t sm:border-b border-border bg-card/50
+    fixed bottom-0 sm:sticky sm:top-14 sm:bottom-auto
+    z-40 w-full backdrop-blur supports-[backdrop-filter]:bg-card/30
+  "
+>
   <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-    <div className="grid grid-cols-4 gap-2 py-2 sm:flex sm:gap-1 sm:overflow-x-auto sm:scrollbar-hide">
-
+    <div
+      className="
+        grid grid-cols-4 gap-1 py-2
+        sm:flex sm:gap-1 sm:justify-center sm:overflow-x-auto sm:scrollbar-hide
+      "
+    >
+      {/* Clock */}
       <Button
         variant={activeView === "clock" ? "default" : "ghost"}
         size="sm"
@@ -413,7 +424,7 @@ export default function ToolsPage() {
         className="
           flex flex-col sm:flex-row items-center justify-center
           gap-0.5 sm:gap-2
-          flex-shrink-0 h-16 sm:h-10
+          flex-shrink-0 h-14 sm:h-10
           px-3 sm:px-4 w-full sm:w-auto
           text-xs sm:text-sm
         "
@@ -422,6 +433,7 @@ export default function ToolsPage() {
         <span>Clock</span>
       </Button>
 
+      {/* Stopwatch */}
       <Button
         variant={activeView === "stopwatch" ? "default" : "ghost"}
         size="sm"
@@ -429,7 +441,7 @@ export default function ToolsPage() {
         className="
           flex flex-col sm:flex-row items-center justify-center
           gap-0.5 sm:gap-2
-          flex-shrink-0 h-16 sm:h-10
+          flex-shrink-0 h-14 sm:h-10
           px-3 sm:px-4 w-full sm:w-auto
           text-xs sm:text-sm
         "
@@ -438,6 +450,7 @@ export default function ToolsPage() {
         <span>Stopwatch</span>
       </Button>
 
+      {/* Timer */}
       <Button
         variant={activeView === "timer" ? "default" : "ghost"}
         size="sm"
@@ -445,7 +458,7 @@ export default function ToolsPage() {
         className="
           flex flex-col sm:flex-row items-center justify-center
           gap-0.5 sm:gap-2
-          flex-shrink-0 h-16 sm:h-10
+          flex-shrink-0 h-14 sm:h-10
           px-3 sm:px-4 w-full sm:w-auto
           text-xs sm:text-sm
         "
@@ -454,26 +467,41 @@ export default function ToolsPage() {
         <span>Timer</span>
       </Button>
 
-      {/* Calculator Button */}
-      <a href="/tools/calculator">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="
-            flex flex-col sm:flex-row items-center justify-center
-            gap-0.5 sm:gap-2
-            flex-shrink-0 h-16 sm:h-10
-            px-3 sm:px-4 w-full sm:w-auto
-            text-xs sm:text-sm
-          "
-        >
-          <Calculator className="w-6 h-6 sm:w-4 sm:h-4" />
-          <span>Calculator</span>
-        </Button>
-      </a>
+      {/* Calculator */}
+      <a
+  href="/tools/calculator"
+  onClick={(e) => {
+    e.preventDefault();
+    // Smooth scroll to top before redirect
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+    setTimeout(() => {
+      window.location.href = "/tools/calculator";
+    }, 400); // 400ms smooth scroll delay before redirect
+  }}
+>
+  <Button
+    variant="ghost"
+    size="sm"
+    className="
+      flex flex-col sm:flex-row items-center justify-center
+      gap-0.5 sm:gap-2
+      flex-shrink-0 h-14 sm:h-10
+      px-3 sm:px-4 w-full sm:w-auto
+      text-xs sm:text-sm
+    "
+  >
+    <Calculator className="w-6 h-6 sm:w-4 sm:h-4" />
+    <span>Calculator</span>
+  </Button>
+</a>
+
     </div>
   </div>
 </nav>
+
 
       </>)}
       <main ref={fullscreenRef} className={`${ isFullscreen ? "fixed inset-0 z-[100] bg-background" : "max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8"}`}>
