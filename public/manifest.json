@@ -9,8 +9,8 @@
   "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "orientation": "portrait-primary",
 
- "background_color": "#f4f4f5",
-"theme_color": "#f4f4f5",
+"background_color": "#1e1e1e",
+"theme_color": "#2d2d2d",
   "dir": "ltr",
   "lang": "en",
 
