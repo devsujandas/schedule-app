@@ -229,7 +229,7 @@ function NoteCard({ note }: { note: Note }) {
         className="mt-auto flex items-center justify-between border-t px-4 py-2 bg-muted/40 rounded-b-2xl text-xs text-muted-foreground"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="truncate text-[11px] sm:text-xs">Updated {updated}</span>
+        <span className="truncate text-[11px] sm:text-xs"> {updated}</span>
         <Button
           size="sm"
           variant="secondary"
