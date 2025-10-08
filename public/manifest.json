@@ -8,8 +8,8 @@
   "display": "standalone",
   "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#1e3a5f",
+  "background_color": "#bde3f7",
+"theme_color": "#bde3f7",
   "dir": "ltr",
   "lang": "en",
   "prefer_related_applications": false,
@@ -27,7 +27,7 @@
       "description": "View the current time and world clocks.",
       "url": "/?view=clock",
       "icons": [
-        { "src": "/icons/shortcut-clock.png", "sizes": "96x96", "type": "image/png" }
+        { "src": "/schedulaar.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -36,7 +36,7 @@
       "description": "Quickly start tracking time intervals.",
       "url": "/?view=stopwatch",
       "icons": [
-        { "src": "/icons/shortcut-stopwatch.png", "sizes": "96x96", "type": "image/png" }
+        { "src": "/schedulaar.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -45,7 +45,7 @@
       "description": "Launch the timer to manage sessions efficiently.",
       "url": "/?view=timer",
       "icons": [
-        { "src": "/icons/shortcut-timer.png", "sizes": "96x96", "type": "image/png" }
+        { "src": "/schedulaar.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -54,7 +54,7 @@
       "description": "Quickly perform calculations on the go.",
       "url": "/tools/calculator",
       "icons": [
-        { "src": "/icons/shortcut-calculator.png", "sizes": "96x96", "type": "image/png" }
+        { "src": "/schedulaar.png", "sizes": "96x96", "type": "image/png" }
       ]
     }
   ],
