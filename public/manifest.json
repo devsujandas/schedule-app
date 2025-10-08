@@ -1,7 +1,7 @@
 {
-  "name": "Daily Schedule - Productivity Tracker",
+  "name": "Daily Schedule – Productivity Tracker",
   "short_name": "Schedulaar",
-  "description": "Plan your day smarter — track time, manage notes, tasks, and goals with clock, timer, and planner in one seamless productivity hub.",
+  "description": "Stay focused and organized with Schedulaar — your all-in-one productivity hub for time tracking, notes, planning, and daily focus tools.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "id": "/",
@@ -18,8 +18,8 @@
   "categories": [
     "productivity",
     "utilities",
-    "time-management",
     "organization",
+    "time-management",
     "focus"
   ],
 
@@ -54,30 +54,38 @@
     {
       "name": "Open Clock",
       "short_name": "Clock",
-      "description": "View and manage time with world clocks.",
+      "description": "Check the current time and world clocks instantly.",
       "url": "/?view=clock",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        { "src": "/schedulaar.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
+      ]
     },
     {
       "name": "Start Stopwatch",
       "short_name": "Stopwatch",
-      "description": "Track your focus sessions precisely.",
+      "description": "Track focus sessions and productivity intervals.",
       "url": "/?view=stopwatch",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        { "src": "/schedulaar.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
+      ]
     },
     {
       "name": "Set Timer",
       "short_name": "Timer",
-      "description": "Stay productive with smart countdowns.",
+      "description": "Manage time effectively with smart countdowns.",
       "url": "/?view=timer",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        { "src": "/schedulaar.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
+      ]
     },
     {
       "name": "Open Calculator",
       "short_name": "Calculator",
-      "description": "Quick and smart calculator access.",
+      "description": "Perform quick calculations while staying focused.",
       "url": "/tools/calculator",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        { "src": "/schedulaar.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
+      ]
     }
   ],
 
@@ -87,20 +95,20 @@
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Light Mode — Home Dashboard"
+      "label": "Light Mode — Dashboard"
     },
     {
       "src": "/screenshots/home-dark.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Dark Mode — Daily Overview"
+      "label": "Dark Mode — Planner Overview"
     },
     {
       "src": "/screenshots/tools.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "label": "All-in-One Productivity Tools"
+      "label": "All Productivity Tools in One Place"
     }
   ],
 
@@ -132,7 +140,9 @@
       "title": "title",
       "text": "text",
       "url": "url",
-      "files": [{ "name": "file", "accept": ["text/plain", "image/*"] }]
+      "files": [
+        { "name": "file", "accept": ["text/plain", "image/*"] }
+      ]
     }
   }
 }
