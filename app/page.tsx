@@ -7,7 +7,7 @@ import { TasksView } from "@/components/tasks-view"
 import { SettingsView } from "@/components/settings-view"
 import { DayTimelineView } from "@/components/day-timeline-view"
 import { Button } from "@/components/ui/button"
-import { Calendar, BarChart3, CheckSquare, Settings, Timer, NotebookPenIcon } from "lucide-react"
+import { Calendar, BarChart3, CheckSquare, Settings, Timer, NotebookPenIcon,  PenSquareIcon } from "lucide-react"
 import Link from "next/link"
 
 export default function Home() {
@@ -26,18 +26,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Left side: Logo + Title */}
-            <div className="flex items-center gap-1 sm:gap-1">
-              <div className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center flex-shrink-0">
-                <img
-                  src="/Schedulaar.png"
-                  alt="Logo"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-playfair text-foreground">
-                Schedulaar
-              </h1>
-            </div>
+            <div className="flex items-center gap-2 sm:gap-2">
+  <PenSquareIcon className="w-6 h-6 text-primary" />
+  <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-playfair text-foreground">
+    Schedulaar
+  </h1>
+</div>
 
 
             
