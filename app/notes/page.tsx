@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   NotebookPenIcon,
@@ -11,6 +11,7 @@ import {
   FileDownIcon,
   Trash2Icon,
   PinOffIcon,
+  SearchIcon,
 } from "lucide-react";
 import { useNotesStore, type Note } from "@/lib/notesStore";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 // 🧹 Helper — remove HTML tags
 function stripHtml(html: string): string {
@@ -39,29 +41,36 @@ function stripHtml(html: string): string {
 export default function NotesPage() {
   const notes = useNotesStore((s) => s.notes);
   const hasHydrated = useNotesStore((s) => s.hasHydrated);
+  const [query, setQuery] = useState("");
 
-  // ✅ Auto-sorted notes
-  const sortedNotes = useMemo(() => {
-    const arr = [...notes];
-    arr.sort((a, b) => {
-      // Pinned first
-      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-      // Then by most recently updated
-      const aUpdated = new Date(a.updatedAt).getTime();
-      const bUpdated = new Date(b.updatedAt).getTime();
-      return bUpdated - aUpdated;
-    });
+  // ✅ Auto-sorted + filtered notes
+  const filteredNotes = useMemo(() => {
+    const search = query.toLowerCase();
+    const arr = [...notes]
+      .filter(
+        (note) =>
+          note.title.toLowerCase().includes(search) ||
+          stripHtml(note.contentHtml).toLowerCase().includes(search)
+      )
+      .sort((a, b) => {
+        // Pinned first
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        // Then by most recently updated
+        const aUpdated = new Date(a.updatedAt).getTime();
+        const bUpdated = new Date(b.updatedAt).getTime();
+        return bUpdated - aUpdated;
+      });
     return arr;
-  }, [notes]);
+  }, [notes, query]);
 
   return (
     <main className="mx-auto w-full max-w-7xl px-3 py-6 sm:px-6 lg:px-10 relative">
       {/* Header */}
-      <nav className="mb-6 flex items-center justify-between border-b pb-4">
+      <nav className="mb-4 flex items-center justify-between border-b pb-4">
         <div className="flex items-center gap-2">
           <NotebookPenIcon className="h-6 w-6 text-primary" />
           <h1 className="text-xl font-semibold text-foreground sm:text-2xl">
-            Notes 
+            Notes Gallery
           </h1>
         </div>
         <Button variant="outline" asChild>
@@ -69,27 +78,39 @@ export default function NotesPage() {
         </Button>
       </nav>
 
-     
+      {/* 🔍 Search Bar */}
+      <div className="mb-6 flex items-center gap-2 rounded-xl border bg-muted/40 p-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/40 transition">
+        <SearchIcon className="h-5 w-5 text-muted-foreground ml-2" />
+        <Input
+          type="text"
+          placeholder="Search notes..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="border-none bg-transparent focus-visible:ring-0 text-sm"
+        />
+      </div>
+
+      {/* Notes Gallery */}
       {!hasHydrated ? (
         <p className="text-muted-foreground text-center">Loading notes…</p>
-      ) : sortedNotes.length === 0 ? (
+      ) : filteredNotes.length === 0 ? (
         <Card className="border-dashed text-center py-10">
           <CardHeader>
-            <CardTitle>No notes found</CardTitle>
+            <CardTitle>No matching notes</CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground">
-            Create your first note to get started!
+            Try a different search term or create a new note!
           </CardContent>
         </Card>
       ) : (
         <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
-          {sortedNotes.map((note) => (
+          {filteredNotes.map((note) => (
             <NoteCard key={note.id} note={note} />
           ))}
         </section>
       )}
 
-     
+      {/* Floating Add Button */}
       <Link
         href="/notes/editor"
         className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-110 transition-transform"
@@ -100,7 +121,7 @@ export default function NotesPage() {
   );
 }
 
-
+// ================== NOTE CARD ==================
 function NoteCard({ note }: { note: Note }) {
   const router = useRouter();
   const togglePin = useNotesStore((s) => s.togglePin);
@@ -109,7 +130,7 @@ function NoteCard({ note }: { note: Note }) {
   const excerpt = stripHtml(note.contentHtml).slice(0, 120);
   const updated = new Date(note.updatedAt).toLocaleString();
 
-  
+  // ✅ Simple Print → Save as PDF
   const downloadPDF = (note: Note) => {
     const win = window.open("", "_blank");
     win!.document.write(`
@@ -190,7 +211,7 @@ function NoteCard({ note }: { note: Note }) {
       </div>
 
       {/* Note Content */}
-      <div className="flex flex-col flex-1 px-4 pt-5 pb-0">
+      <div className="flex flex-col flex-1 px-4 pt-5 pb-2">
         <CardHeader className="pb-2 px-0">
           <CardTitle className="line-clamp-1 text-lg font-semibold text-foreground">
             {note.title || "Untitled"}
@@ -203,26 +224,23 @@ function NoteCard({ note }: { note: Note }) {
         </CardContent>
       </div>
 
-      {/* Footer — flush with bottom */}
+      {/* Footer */}
       <CardFooter
-  className="mt-0 flex items-center justify-between border-t px-4 py-3 bg-gradient-to-r from-muted/40 via-muted/30 to-muted/40 text-xs text-muted-foreground rounded-b-2xl backdrop-blur-sm transition-all duration-300 hover:bg-muted/50 hover:shadow-md"
-  onClick={(e) => e.stopPropagation()}
->
-  <span className="flex-1 min-w-[120px] truncate font-normal text-muted-foreground/80 tracking-wide transition-colors duration-300 hover:text-foreground/90">
-     {updated}
-  </span>
-  <Button
-    size="sm"
-    variant="secondary"
-    asChild
-    className="text-xs px-3 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]"
-  >
-    <Link href={`/notes/editor?id=${encodeURIComponent(note.id)}`}>
-      Edit
-    </Link>
-  </Button>
-</CardFooter>
-
+        className="mt-auto flex items-center justify-between border-t px-4 py-2 bg-muted/40 rounded-b-2xl text-xs text-muted-foreground"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span className="truncate text-[11px] sm:text-xs">Updated {updated}</span>
+        <Button
+          size="sm"
+          variant="secondary"
+          asChild
+          className="text-xs px-3 rounded-lg"
+        >
+          <Link href={`/notes/editor?id=${encodeURIComponent(note.id)}`}>
+            Edit
+          </Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
